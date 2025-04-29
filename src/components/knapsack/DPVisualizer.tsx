@@ -1,0 +1,195 @@
+import React, { useState, useEffect } from 'react';
+import { Item, DPStep } from '@/types/knapsack';
+
+interface DPVisualizerProps {
+    items: Item[];
+    maxWeight: number;
+    onStepChange?: (step: number) => void;
+}
+
+const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepChange }) => {
+    const [currentStep, setCurrentStep] = useState(0);
+    const [dpTable, setDpTable] = useState<DPStep[][]>([]);
+    const [explanation, setExplanation] = useState<string>('');
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [playSpeed, setPlaySpeed] = useState(500); // milliseconds per step
+
+    useEffect(() => {
+        const n = items.length;
+        const capacity = maxWeight;
+        const table: DPStep[][] = Array(n + 1).fill(null).map(() => Array(capacity + 1).fill(null));
+        const steps: DPStep[] = [];
+
+        // Initialize first row
+        for (let w = 0; w <= capacity; w++) {
+            table[0][w] = { i: 0, w, value: 0, selected: false };
+        }
+
+        // Fill the table
+        for (let i = 1; i <= n; i++) {
+            const item = items[i - 1];
+            for (let w = 0; w <= capacity; w++) {
+                if (item.weight > w) {
+                    table[i][w] = { i, w, value: table[i - 1][w].value, selected: false };
+                } else {
+                    const valueWithItem = table[i - 1][w - item.weight].value + item.worth;
+                    const valueWithoutItem = table[i - 1][w].value;
+
+                    if (valueWithItem > valueWithoutItem) {
+                        table[i][w] = { i, w, value: valueWithItem, selected: true };
+                    } else {
+                        table[i][w] = { i, w, value: valueWithoutItem, selected: false };
+                    }
+                }
+                steps.push(table[i][w]);
+            }
+        }
+
+        setDpTable(table);
+        setCurrentStep(0);
+        if (onStepChange) onStepChange(0);
+    }, [items, maxWeight]);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (isPlaying && currentStep < dpTable.flat().length - 1) {
+            timer = setTimeout(() => {
+                setCurrentStep(prev => prev + 1);
+                if (onStepChange) onStepChange(currentStep + 1);
+            }, playSpeed);
+        } else if (currentStep >= dpTable.flat().length - 1) {
+            setIsPlaying(false);
+        }
+        return () => clearTimeout(timer);
+    }, [isPlaying, currentStep, dpTable, playSpeed]);
+
+    const handleNextStep = () => {
+        if (currentStep < dpTable.flat().length - 1) {
+            setCurrentStep(prev => prev + 1);
+            if (onStepChange) onStepChange(currentStep + 1);
+        }
+    };
+
+    const handlePrevStep = () => {
+        if (currentStep > 0) {
+            setCurrentStep(prev => prev - 1);
+            if (onStepChange) onStepChange(currentStep - 1);
+        }
+    };
+
+    const togglePlay = () => {
+        setIsPlaying(!isPlaying);
+    };
+
+    const handleSpeedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPlaySpeed(1000 - Number(e.target.value));
+    };
+
+    useEffect(() => {
+        const step = dpTable.flat()[currentStep];
+        if (!step) return;
+
+        const item = items[step.i - 1];
+        if (!item) {
+            setExplanation('Initializing the table with zero values for empty knapsack.');
+            return;
+        }
+
+        if (item.weight > step.w) {
+            setExplanation(`Item ${item.name} (weight: ${item.weight}kg) is too heavy for capacity ${step.w}kg. Using previous value.`);
+        } else {
+            const valueWithItem = dpTable[step.i - 1][step.w - item.weight].value + item.worth;
+            const valueWithoutItem = dpTable[step.i - 1][step.w].value;
+
+            if (valueWithItem > valueWithoutItem) {
+                setExplanation(`Including ${item.name} (weight: ${item.weight}kg, worth: $${item.worth}) gives better value ($${valueWithItem}) than not including it ($${valueWithoutItem}).`);
+            } else {
+                setExplanation(`Not including ${item.name} (weight: ${item.weight}kg, worth: $${item.worth}) gives better value ($${valueWithoutItem}) than including it ($${valueWithItem}).`);
+            }
+        }
+    }, [currentStep, dpTable, items]);
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <div className="text-lg font-semibold">Dynamic Programming Table</div>
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                        <span className="text-sm">Speed:</span>
+                        <input
+                            type="range"
+                            min="0"
+                            max="900"
+                            value={1000 - playSpeed}
+                            onChange={handleSpeedChange}
+                            className="w-24"
+                        />
+                    </div>
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={handlePrevStep}
+                            disabled={currentStep === 0}
+                            className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={togglePlay}
+                            className="px-3 py-1 bg-blue-500 text-white rounded"
+                        >
+                            {isPlaying ? 'Pause' : 'Play'}
+                        </button>
+                        <button
+                            onClick={handleNextStep}
+                            disabled={currentStep === dpTable.flat().length - 1}
+                            className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white/10 p-4 rounded-lg">
+                <div className="text-sm mb-2">Step {currentStep + 1} of {dpTable.flat().length}</div>
+                <div className="text-sm mb-4">{explanation}</div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr>
+                                <th className="border p-2">Item</th>
+                                {Array.from({ length: maxWeight + 1 }, (_, i) => (
+                                    <th key={i} className="border p-2">{i}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {dpTable.map((row, i) => (
+                                <tr key={i}>
+                                    <td className="border p-2">
+                                        {i === 0 ? 'Empty' : items[i - 1].name}
+                                    </td>
+                                    {row.map((cell, j) => {
+                                        const isCurrentStep = currentStep === (i * (maxWeight + 1) + j);
+                                        return (
+                                            <td
+                                                key={j}
+                                                className={`border p-2 ${isCurrentStep ? 'bg-blue-500/20' : ''} ${cell.selected ? 'bg-green-500/20' : ''
+                                                    }`}
+                                            >
+                                                {cell.value}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default DPVisualizer; 

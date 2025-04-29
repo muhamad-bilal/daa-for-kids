@@ -45,7 +45,7 @@ export default function Home() {
                         className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-slate-700/50 hover:border-blue-500 transition-all duration-300"
                     >
                         <h2 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-                            Split and Merge Simulator
+                            Least Common Subsequences
                         </h2>
                         <p className="text-slate-300">
                             Visualize the split and merge algorithm for external sorting and database operations
@@ -57,7 +57,7 @@ export default function Home() {
                         className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-slate-700/50 hover:border-blue-500 transition-all duration-300"
                     >
                         <h2 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-                            Search Algorithms
+                            Huffman Encoding
                         </h2>
                         <p className="text-slate-300">
                             Visualize search algorithms like Binary Search, Linear Search, and more
@@ -108,13 +108,13 @@ export default function Home() {
                                 <span>Hamza Motiwala</span>
                             </a>
                             <a
-                                href="https://github.com/moti987"
+                                href="https://github.com/Zarish166"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center space-x-2 text-slate-300 hover:text-blue-400 transition-colors"
                             >
                                 <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                                <span>Zerish</span>
+                                <span>Zarish Asim</span>
                             </a>
                         </div>
                     </div>

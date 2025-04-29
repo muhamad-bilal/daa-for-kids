@@ -18,6 +18,7 @@ const createInitialGrid = (): Grid => {
         isPath: false,
         distance: Infinity,
         fScore: Infinity,
+        f: Infinity,
         previousNode: null,
       });
     }
@@ -155,6 +156,7 @@ const generateRandomMap = (): Grid => {
           isPath: false,
           distance: Infinity,
           fScore: Infinity,
+          f: Infinity,
           previousNode: null,
         });
       }
@@ -182,6 +184,7 @@ const generateRandomMap = (): Grid => {
       isPath: false,
       distance: 0, // Start node should have distance 0
       fScore: Infinity,
+      f: Infinity,
       previousNode: null,
     };
     
@@ -194,6 +197,7 @@ const generateRandomMap = (): Grid => {
       isPath: false,
       distance: Infinity,
       fScore: Infinity,
+      f: Infinity,
       previousNode: null,
     };
     
