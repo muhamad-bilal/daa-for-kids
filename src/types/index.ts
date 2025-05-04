@@ -32,6 +32,10 @@ export interface AlgorithmInfo {
   spaceComplexity: string;
   optimal: boolean;
   description: string;
+  weighted?: boolean;
+  unweighted?: boolean;
+  informed?: boolean;
+  complete?: boolean;
 }
 
 export interface VisualizerState {
