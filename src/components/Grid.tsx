@@ -7,6 +7,7 @@ import { useVisualizer } from "../hooks/useVisualizer"
 import Node from "./Node"
 import { motion } from "framer-motion"
 import { Minus, Plus, Layers } from "lucide-react"
+import type { Node as NodeType, Grid } from "../types"
 
 const Grid: React.FC = () => {
     const { grid, setGrid, startNode, endNode, setStartNode, setEndNode } = useVisualizerStore()
@@ -129,9 +130,9 @@ const Grid: React.FC = () => {
             </div>
 
             <div className="grid gap-[1px] bg-zinc-200 dark:bg-zinc-700 p-1 rounded-lg" onMouseLeave={handleMouseUp}>
-                {grid.map((row, rowIndex) => (
+                {grid.map((row: NodeType[], rowIndex: number) => (
                     <div key={rowIndex} className="flex">
-                        {row.map((node, colIndex) => (
+                        {row.map((node: NodeType, colIndex: number) => (
                             <Node
                                 key={`${rowIndex}-${colIndex}`}
                                 node={node}

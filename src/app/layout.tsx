@@ -6,7 +6,7 @@ import { Inter } from "next/font/google"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-    title: "AlgoViz - Algorithm Visualization",
+    title: "daa for kids ",
     description: "Interactive visualization tools for understanding algorithm behavior and performance",
 }
 

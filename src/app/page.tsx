@@ -69,7 +69,7 @@ export default function Home() {
                                     Explore Algorithms
                                 </Link>
                                 <a
-                                    href="https://github.com/your-repo"
+                                    href="https://github.com/muhamad-bilal/daa-for-kids"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-6 py-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
@@ -326,12 +326,12 @@ export default function Home() {
                                 <span className="text-zinc-400 dark:text-zinc-500 text-sm ml-2">© {new Date().getFullYear()}</span>
                             </div>
                             <div className="flex gap-6">
-                                <a
-                                    href="#"
+                                <Link
+                                    href="/about"
                                     className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm"
                                 >
                                     About
-                                </a>
+                                </Link>
                                 <a
                                     href="#"
                                     className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm"
@@ -339,7 +339,7 @@ export default function Home() {
                                     Documentation
                                 </a>
                                 <a
-                                    href="https://github.com/your-repo"
+                                    href="https://github.com/muhamad-bilal/daa-for-kids"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm flex items-center gap-1"

@@ -106,7 +106,7 @@ export default function PathfindingPage() {
                                         min={1}
                                         max={10}
                                         step={1}
-                                        onValueChange={(value) => setSpeed(value[0])}
+                                        onValueChange={(value: number[]) => setSpeed(value[0])}
                                     />
                                 </div>
                                 <div className="flex gap-2">

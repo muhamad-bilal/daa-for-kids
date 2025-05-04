@@ -669,7 +669,7 @@ export default function LCSVisualizer() {
                                                         min={100}
                                                         max={2000}
                                                         step={100}
-                                                        onValueChange={(value) => setPlaybackSpeed(value[0])}
+                                                        onValueChange={(value: number[]) => setPlaybackSpeed(value[0])}
                                                     />
                                                 </div>
                                                 <span className="text-sm text-zinc-600 dark:text-zinc-400 w-16">{playbackSpeed}ms</span>
