@@ -16,10 +16,10 @@ export default function Home() {
 
     const contributors = [
         { name: "Muhammad Bilal", github: "muhamad-bilal", linkedin: "muhammad-billo", color: "fuchsia" },
-        { name: "Abdullah Mustafa", github: "rimocide", linkedin: "abdullah-mustafa", color: "violet" },
-        { name: "Umer Sami", github: "MoUmerSami2004", linkedin: "umer-sami", color: "pink" },
-        { name: "Hamza Motiwala", github: "moti987", linkedin: "hamza-motiwala", color: "purple" },
-        { name: "Zarish Asim", github: "Zarish166", linkedin: "zarish-asim", color: "fuchsia" },
+        { name: "Abdullah Mustafa", github: "rimocide", linkedin: "abdullmusta", color: "violet" },
+        { name: "Umer Sami", github: "MoUmerSami2004", linkedin: "muhammad-umer-sami", color: "pink" },
+        { name: "Hamza Motiwala", github: "moti987", linkedin: "muhammad-hamza-motiwala-217647221", color: "purple" },
+        { name: "Zarish Asim", github: "Zarish166", linkedin: "zarish-asim-23a391339", color: "fuchsia" },
     ]
 
     return (
