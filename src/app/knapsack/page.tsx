@@ -19,10 +19,12 @@ import {
     BarChart4,
     Scale,
     DollarSign,
+    BookOpen,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Header from "@/components/header"
+import { Slider } from "@/components/ui/slider"
 
 const REALISTIC_ITEMS = [
     "Laptop",
@@ -181,7 +183,7 @@ export default function KnapsackPage() {
         })
 
         // Automatically switch to results tab
-        setActiveTab("results")
+        setActiveTab("comparison")
     }
 
     const solveDP = () => {
@@ -244,7 +246,7 @@ export default function KnapsackPage() {
         })
 
         // Automatically switch to results tab
-        setActiveTab("results")
+        setActiveTab("comparison")
     }
 
     const compareAlgorithms = () => {
@@ -309,7 +311,7 @@ export default function KnapsackPage() {
 
                 {/* Main Content Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-3 mb-6">
+                    <TabsList className="grid grid-cols-4 mb-6">
                         <TabsTrigger value="setup" className="flex items-center gap-2">
                             <Briefcase size={16} />
                             <span className="hidden sm:inline">Problem Setup</span>
@@ -320,10 +322,15 @@ export default function KnapsackPage() {
                             <span className="hidden sm:inline">Solve Problem</span>
                             <span className="sm:hidden">Solve</span>
                         </TabsTrigger>
-                        <TabsTrigger value="results" className="flex items-center gap-2">
+                        <TabsTrigger value="comparison" className="flex items-center gap-2">
                             <BarChart4 size={16} />
                             <span className="hidden sm:inline">View Results</span>
                             <span className="sm:hidden">Results</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="theory" className="flex items-center gap-2">
+                            <BookOpen size={16} />
+                            <span className="hidden sm:inline">Theory</span>
+                            <span className="sm:hidden">Theory</span>
                         </TabsTrigger>
                     </TabsList>
 
@@ -606,6 +613,7 @@ export default function KnapsackPage() {
                                             }`}
                                         onClick={() => {
                                             setAlgorithm("greedy")
+                                            setShowComparison(false)
                                             solveGreedy()
                                         }}
                                     >
@@ -625,6 +633,7 @@ export default function KnapsackPage() {
                                             }`}
                                         onClick={() => {
                                             setAlgorithm("dp")
+                                            setShowComparison(false)
                                             solveDP()
                                         }}
                                     >
@@ -724,141 +733,88 @@ export default function KnapsackPage() {
                         </div>
                     </TabsContent>
 
-                    {/* Results Tab */}
-                    <TabsContent value="results" className="space-y-6">
-                        {/* Bag Visualization */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700"
-                        >
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-semibold">Solution Visualization</h2>
+                    {/* Comparison Tab */}
+                    <TabsContent value="comparison" className="space-y-6">
+                        {/* Bag Visualization - Only show when not comparing */}
+                        {!showComparison && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700"
+                            >
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-semibold">Solution Visualization</h2>
+                                    {currentSolution && (
+                                        <div className="bg-zinc-100 dark:bg-zinc-900 px-3 py-1 rounded-full text-sm">
+                                            {algorithm === "greedy" ? "Greedy Algorithm" : "Dynamic Programming"}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <BagVisualization
+                                    items={algorithm === "greedy" ? greedySolution?.items || [] : dpSolution?.items || []}
+                                    maxWeight={maxWeight}
+                                    currentWeight={currentWeight}
+                                />
+
                                 {currentSolution && (
-                                    <div className="bg-zinc-100 dark:bg-zinc-900 px-3 py-1 rounded-full text-sm">
-                                        {algorithm === "greedy" ? "Greedy Algorithm" : "Dynamic Programming"}
+                                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
+                                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Items Selected:</p>
+                                            <p className="font-medium">{currentSolution.items.length} items</p>
+                                        </div>
+                                        <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
+                                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Weight:</p>
+                                            <p className="font-medium">{currentSolution.totalWeight} / {maxWeight} units</p>
+                                        </div>
+                                        <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
+                                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Worth:</p>
+                                            <p className="font-medium">${currentSolution.totalWorth}</p>
+                                        </div>
                                     </div>
                                 )}
-                            </div>
+                            </motion.div>
+                        )}
 
-                            <BagVisualization
-                                items={algorithm === "greedy" ? greedySolution?.items || [] : dpSolution?.items || []}
-                                maxWeight={maxWeight}
-                                currentWeight={currentWeight}
-                            />
-
-                            {currentSolution && (
-                                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
-                                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Items Selected:</p>
-                                        <p className="font-medium">{currentSolution.items.length} items</p>
-                                    </div>
-                                    <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
-                                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Weight:</p>
-                                        <p className="font-medium">{currentSolution.totalWeight} / {maxWeight} units</p>
-                                    </div>
-                                    <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
-                                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Total Worth:</p>
-                                        <p className="font-medium">${currentSolution.totalWorth}</p>
-                                    </div>
-                                </div>
-                            )}
-                        </motion.div>
-
-                        {/* Selected Items */}
-                        {currentSolution && (
+                        {/* DP Table Visualization - Only show when not comparing */}
+                        {algorithm === "dp" && !showComparison && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3, delay: 0.1 }}
                                 className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700"
                             >
-                                <h2 className="text-xl font-semibold mb-4">Selected Items</h2>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {currentSolution.items.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className={`p-4 rounded-lg ${item.required
-                                                ? "bg-fuchsia-50 dark:bg-fuchsia-900/20 border border-fuchsia-100 dark:border-fuchsia-800/30"
-                                                : "bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30"
-                                                }`}
-                                        >
-                                            <p className="font-medium">{item.name}</p>
-                                            <div className="flex justify-between mt-2 text-sm">
-                                                <p className="text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
-                                                    <Scale size={14} /> {item.weight}
-                                                </p>
-                                                <p className="text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
-                                                    <DollarSign size={14} /> {item.worth}
-                                                </p>
-                                            </div>
-                                            <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
-                                                Ratio: {(item.worth / item.weight).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    ))}
+                                <div className="space-y-4">
+                                    <DPVisualizer
+                                        items={items}
+                                        maxWeight={maxWeight}
+                                        emptyBagWeight={emptyBagWeight}
+                                        onStepChange={setCurrentStep}
+                                    />
                                 </div>
-
-                                {algorithm === "greedy" && (
-                                    <div className="mt-6 flex justify-end">
-                                        <button
-                                            onClick={() => {
-                                                setAlgorithm("dp")
-                                                solveDP()
-                                            }}
-                                            className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:opacity-90 transition-colors"
-                                        >
-                                            Try Dynamic Programming
-                                            <ArrowRight size={16} />
-                                        </button>
-                                    </div>
-                                )}
-
-                                {algorithm === "dp" && (
-                                    <div className="mt-6 flex justify-end">
-                                        <button
-                                            onClick={() => {
-                                                setAlgorithm("greedy")
-                                                solveGreedy()
-                                            }}
-                                            className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:opacity-90 transition-colors"
-                                        >
-                                            Try Greedy Algorithm
-                                            <ArrowRight size={16} />
-                                        </button>
-                                    </div>
-                                )}
                             </motion.div>
                         )}
 
-                        {algorithm === "dp" && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: 0.2 }}
-                                className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700"
-                            >
-                                <h2 className="text-xl font-semibold mb-4">Dynamic Programming Visualization</h2>
-                                <DPVisualizer items={items} maxWeight={maxWeight} onStepChange={setCurrentStep} />
-                            </motion.div>
-                        )}
-
+                        {/* Comparison Section - Only show when comparing */}
                         {showComparison && (
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3, delay: 0.3 }}
+                                transition={{ duration: 0.3, delay: 0.1 }}
                                 className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700"
                             >
                                 <h2 className="text-xl font-semibold mb-6">Algorithm Comparison</h2>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Greedy Algorithm */}
                                     <div className="bg-fuchsia-50 dark:bg-fuchsia-900/10 p-6 rounded-xl border border-fuchsia-100 dark:border-fuchsia-800/20">
                                         <h3 className="text-lg font-semibold mb-4 text-fuchsia-600 dark:text-fuchsia-400">Greedy Algorithm</h3>
-
-                                        <div className="space-y-4">
+                                        <BagVisualization
+                                            items={greedySolution?.items || []}
+                                            maxWeight={maxWeight}
+                                            currentWeight={greedySolution?.totalWeight || 0}
+                                        />
+                                        <div className="mt-4 space-y-2">
                                             <div className="flex justify-between">
                                                 <span className="text-zinc-600 dark:text-zinc-400">Items Selected:</span>
                                                 <span className="font-medium">{greedySolution?.items.length || 0} items</span>
@@ -878,10 +834,15 @@ export default function KnapsackPage() {
                                         </div>
                                     </div>
 
+                                    {/* Dynamic Programming */}
                                     <div className="bg-violet-50 dark:bg-violet-900/10 p-6 rounded-xl border border-violet-100 dark:border-violet-800/20">
                                         <h3 className="text-lg font-semibold mb-4 text-violet-600 dark:text-violet-400">Dynamic Programming</h3>
-
-                                        <div className="space-y-4">
+                                        <BagVisualization
+                                            items={dpSolution?.items || []}
+                                            maxWeight={maxWeight}
+                                            currentWeight={dpSolution?.totalWeight || 0}
+                                        />
+                                        <div className="mt-4 space-y-2">
                                             <div className="flex justify-between">
                                                 <span className="text-zinc-600 dark:text-zinc-400">Items Selected:</span>
                                                 <span className="font-medium">{dpSolution?.items.length || 0} items</span>
@@ -902,6 +863,7 @@ export default function KnapsackPage() {
                                     </div>
                                 </div>
 
+                                {/* Analysis */}
                                 <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-800/20">
                                     <div className="flex items-start gap-3">
                                         <Lightbulb className="text-amber-500 shrink-0 mt-1" size={20} />
@@ -915,12 +877,25 @@ export default function KnapsackPage() {
                                                     </>
                                                 ) : dpSolution && greedySolution && dpSolution.totalWorth === greedySolution.totalWorth ? (
                                                     <>
-                                                        Both algorithms found solutions with the same total worth. In this case, the Greedy algorithm was more efficient
-                                                        as it executed in {greedySolution.time.toFixed(2)} ms compared to {dpSolution.time.toFixed(2)} ms for Dynamic Programming.
+                                                        Both algorithms found solutions with the same total worth of ${dpSolution.totalWorth}.
+                                                        {Math.abs(dpSolution.time - greedySolution.time) > 0.01 ? (
+                                                            <>
+                                                                The Greedy algorithm executed in {greedySolution.time.toFixed(2)} ms, while Dynamic Programming took {dpSolution.time.toFixed(2)} ms.
+                                                                In this case, both algorithms found the optimal solution, but Greedy was faster.
+                                                                This happens when the items' value-to-weight ratios are such that the Greedy approach naturally leads to the optimal solution.
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                Both algorithms executed in {dpSolution.time.toFixed(2)} ms.
+                                                                In this case, both algorithms found the optimal solution with similar performance.
+                                                                The Greedy approach is generally more memory-efficient as it doesn't need to build a DP table.
+                                                            </>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <>
                                                         The Greedy algorithm found a solution quickly, but Dynamic Programming guarantees an optimal solution by considering all possible combinations.
+                                                        For this problem, Greedy took {greedySolution?.time.toFixed(2) || 0} ms while DP took {dpSolution?.time.toFixed(2) || 0} ms.
                                                     </>
                                                 )}
                                             </p>
@@ -929,16 +904,184 @@ export default function KnapsackPage() {
                                 </div>
                             </motion.div>
                         )}
+                    </TabsContent>
 
-                        <div className="flex justify-center mt-6">
-                            <button
-                                onClick={() => setActiveTab("solve")}
-                                className="px-6 py-3 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors flex items-center gap-2"
-                            >
-                                <ChevronLeft size={16} />
-                                Back to Algorithm Selection
-                            </button>
-                        </div>
+                    {/* Theory Tab */}
+                    <TabsContent value="theory" className="space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border border-zinc-200 dark:border-zinc-700"
+                        >
+                            <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-violet-500">
+                                The Knapsack Problem
+                            </h2>
+                            <div className="prose dark:prose-invert max-w-none">
+                                <p className="text-zinc-700 dark:text-zinc-300">
+                                    The Knapsack Problem is a classic optimization problem in computer science and mathematics.
+                                    Given a set of items, each with a weight and a value, determine the number of each item to include
+                                    in a collection so that the total weight is less than or equal to a given limit and the total value
+                                    is as large as possible.
+                                </p>
+
+                                <h3 className="text-xl font-semibold mt-6 mb-3 text-fuchsia-500 dark:text-fuchsia-400">Problem Definition</h3>
+                                <ul className="list-disc pl-6 space-y-2 text-zinc-700 dark:text-zinc-300">
+                                    <li>Input: A set of items, each with a weight and value</li>
+                                    <li>Constraint: Maximum weight capacity of the knapsack</li>
+                                    <li>Objective: Maximize the total value while staying within the weight limit</li>
+                                </ul>
+
+                                <h3 className="text-xl font-semibold mt-6 mb-3 text-fuchsia-500 dark:text-fuchsia-400">Greedy Algorithm</h3>
+                                <div className="space-y-4 text-zinc-700 dark:text-zinc-300">
+                                    <p>
+                                        The Greedy algorithm makes locally optimal choices at each step, hoping to find a global optimum.
+                                        For the Knapsack problem, it:
+                                    </p>
+                                    <ul className="list-disc pl-6 space-y-2">
+                                        <li>Sorts items by value-to-weight ratio (value/weight)</li>
+                                        <li>Selects items in order of highest ratio until the knapsack is full</li>
+                                        <li>Time Complexity: O(n log n) due to sorting</li>
+                                    </ul>
+
+                                    <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                        <h4 className="font-medium text-fuchsia-600 dark:text-fuchsia-400 mb-2">Implementation Example:</h4>
+                                        <pre className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg overflow-x-auto text-sm">
+                                            <code className="text-zinc-700 dark:text-zinc-300">
+                                                {`function greedyKnapsack(items, maxWeight) {
+    // Sort items by value-to-weight ratio in descending order
+    const sortedItems = [...items].sort((a, b) => 
+        (b.worth / b.weight) - (a.worth / a.weight)
+    );
+
+    let currentWeight = 0;
+    let totalValue = 0;
+    const selectedItems = [];
+
+    // Select items until knapsack is full
+    for (const item of sortedItems) {
+        if (currentWeight + item.weight <= maxWeight) {
+            currentWeight += item.weight;
+            totalValue += item.worth;
+            selectedItems.push(item);
+        }
+    }
+
+    return {
+        items: selectedItems,
+        totalWeight: currentWeight,
+        totalValue
+    };
+}`}
+                                            </code>
+                                        </pre>
+                                    </div>
+
+                                    <div className="p-4 bg-fuchsia-50 dark:bg-fuchsia-900/20 rounded-lg border border-fuchsia-100 dark:border-fuchsia-800/20">
+                                        <p className="font-medium text-fuchsia-600 dark:text-fuchsia-400">Advantages:</p>
+                                        <ul className="list-disc pl-6 mt-2">
+                                            <li>Simple to implement</li>
+                                            <li>Fast execution time</li>
+                                            <li>Good for large datasets</li>
+                                        </ul>
+                                        <p className="font-medium text-fuchsia-600 dark:text-fuchsia-400 mt-4">Limitations:</p>
+                                        <ul className="list-disc pl-6 mt-2">
+                                            <li>Doesn't always find the optimal solution</li>
+                                            <li>Performance depends on item properties</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-xl font-semibold mt-6 mb-3 text-violet-500 dark:text-violet-400">Dynamic Programming</h3>
+                                <div className="space-y-4 text-zinc-700 dark:text-zinc-300">
+                                    <p>
+                                        Dynamic Programming solves the problem by breaking it down into smaller subproblems and
+                                        building up the solution. For the Knapsack problem, it:
+                                    </p>
+                                    <ul className="list-disc pl-6 space-y-2">
+                                        <li>Creates a 2D table where rows represent items and columns represent weights</li>
+                                        <li>Fills the table by considering each item and weight combination</li>
+                                        <li>Time Complexity: O(nW) where n is number of items and W is max weight</li>
+                                    </ul>
+
+                                    <div className="mt-4 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                        <h4 className="font-medium text-violet-600 dark:text-violet-400 mb-2">Implementation Example:</h4>
+                                        <pre className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg overflow-x-auto text-sm">
+                                            <code className="text-zinc-700 dark:text-zinc-300">
+                                                {`function dpKnapsack(items, maxWeight) {
+    const n = items.length;
+    // Create DP table: dp[i][w] = max value with first i items and weight w
+    const dp = Array(n + 1).fill().map(() => Array(maxWeight + 1).fill(0));
+    const selected = Array(n + 1).fill().map(() => Array(maxWeight + 1).fill(false));
+
+    // Fill DP table
+    for (let i = 1; i <= n; i++) {
+        const item = items[i - 1];
+        for (let w = 0; w <= maxWeight; w++) {
+            if (item.weight > w) {
+                dp[i][w] = dp[i - 1][w];
+            } else {
+                const valueWithItem = dp[i - 1][w - item.weight] + item.worth;
+                const valueWithoutItem = dp[i - 1][w];
+                
+                if (valueWithItem > valueWithoutItem) {
+                    dp[i][w] = valueWithItem;
+                    selected[i][w] = true;
+                } else {
+                    dp[i][w] = valueWithoutItem;
+                }
+            }
+        }
+    }
+
+    // Find selected items
+    let w = maxWeight;
+    const selectedItems = [];
+    for (let i = n; i > 0; i--) {
+        if (selected[i][w]) {
+            selectedItems.push(items[i - 1]);
+            w -= items[i - 1].weight;
+        }
+    }
+
+    return {
+        items: selectedItems,
+        totalWeight: maxWeight - w,
+        totalValue: dp[n][maxWeight]
+    };
+}`}
+                                            </code>
+                                        </pre>
+                                    </div>
+
+                                    <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-lg border border-violet-100 dark:border-violet-800/20">
+                                        <p className="font-medium text-violet-600 dark:text-violet-400">Advantages:</p>
+                                        <ul className="list-disc pl-6 mt-2">
+                                            <li>Guarantees optimal solution</li>
+                                            <li>Works for any set of items</li>
+                                            <li>Can handle fractional weights</li>
+                                        </ul>
+                                        <p className="font-medium text-violet-600 dark:text-violet-400 mt-4">Limitations:</p>
+                                        <ul className="list-disc pl-6 mt-2">
+                                            <li>Higher memory usage</li>
+                                            <li>Slower for large weight limits</li>
+                                            <li>Not suitable for very large datasets</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-xl font-semibold mt-6 mb-3 text-amber-500 dark:text-amber-400">Real-world Applications</h3>
+                                <div className="space-y-4 text-zinc-700 dark:text-zinc-300">
+                                    <ul className="list-disc pl-6 space-y-2">
+                                        <li>Resource allocation in project management</li>
+                                        <li>Portfolio optimization in finance</li>
+                                        <li>Cutting stock problems in manufacturing</li>
+                                        <li>Data compression and encryption</li>
+                                        <li>Resource scheduling in cloud computing</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </motion.div>
                     </TabsContent>
                 </Tabs>
             </div>

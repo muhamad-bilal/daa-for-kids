@@ -2,68 +2,92 @@ import { Node } from '../types';
 
 export const bellmanFord = (grid: Node[][], startNode: Node, endNode: Node): Node[] => {
     const visitedNodesInOrder: Node[] = [];
-    const rows = grid.length;
-    const cols = grid[0].length;
-    const distances: number[][] = Array(rows).fill(null).map(() => Array(cols).fill(Infinity));
-    const predecessors: (Node | null)[][] = Array(rows).fill(null).map(() => Array(cols).fill(null));
-
-    // Initialize distances
-    distances[startNode.row][startNode.col] = 0;
+    const visited = new Set<string>();
+    
+    // Reset nodes
+    grid.forEach(row => {
+        row.forEach(node => {
+            node.distance = Infinity;
+            node.previousNode = null;
+            node.isVisited = false;
+            node.isPath = false;
+        });
+    });
+    
+    // Initialize start node
+    startNode.distance = 0;
+    startNode.isVisited = true;
     visitedNodesInOrder.push(startNode);
-
-    // Relax edges V-1 times
-    for (let i = 0; i < rows * cols - 1; i++) {
+    visited.add(`${startNode.row}-${startNode.col}`);
+    
+    // Get all valid nodes (non-walls)
+    const allNodes: Node[] = [];
+    grid.forEach(row => {
+        row.forEach(node => {
+            if (node.type !== 'wall') {
+                allNodes.push(node);
+            }
+        });
+    });
+    
+    // Relax edges |V|-1 times
+    const V = allNodes.length;
+    for (let i = 0; i < V - 1; i++) {
         let updated = false;
-        for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-                if (grid[row][col].type === 'wall') continue;
-
-                const neighbors = getNeighbors(grid, row, col);
-                for (const neighbor of neighbors) {
-                    const newDist = distances[row][col] + neighbor.weight;
-                    if (newDist < distances[neighbor.row][neighbor.col]) {
-                        distances[neighbor.row][neighbor.col] = newDist;
-                        predecessors[neighbor.row][neighbor.col] = grid[row][col];
-                        updated = true;
-                        if (!visitedNodesInOrder.includes(neighbor)) {
-                            visitedNodesInOrder.push(neighbor);
-                        }
+        
+        for (const node of allNodes) {
+            if (node.distance === Infinity) continue;
+            
+            const neighbors = getNeighbors(grid, node.row, node.col);
+            for (const neighbor of neighbors) {
+                const newDist = node.distance + neighbor.weight;
+                if (newDist < neighbor.distance) {
+                    neighbor.distance = newDist;
+                    neighbor.previousNode = node;
+                    updated = true;
+                    
+                    const nodeKey = `${neighbor.row}-${neighbor.col}`;
+                    if (!visited.has(nodeKey)) {
+                        visited.add(nodeKey);
+                        neighbor.isVisited = true;
+                        visitedNodesInOrder.push(neighbor);
                     }
                 }
             }
         }
+        
+        // If no updates were made in this pass, we can stop early
         if (!updated) break;
-    }
-
-    // Check for negative cycles
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-            if (grid[row][col].type === 'wall') continue;
-
-            const neighbors = getNeighbors(grid, row, col);
-            for (const neighbor of neighbors) {
-                if (distances[row][col] + neighbor.weight < distances[neighbor.row][neighbor.col]) {
-                    // Negative cycle detected
-                    return visitedNodesInOrder;
-                }
-            }
+        
+        // If we've reached the end node, we can stop early
+        if (visited.has(`${endNode.row}-${endNode.col}`)) {
+            break;
         }
     }
-
-    // Set previous nodes for path reconstruction
-    if (predecessors[endNode.row][endNode.col]) {
-        let current = endNode;
-        while (current !== startNode && current) {
-            const prev = predecessors[current.row][current.col];
-            if (prev) {
-                prev.previousNode = current;
-                current = prev;
-            } else {
+    
+    // Check for negative cycles
+    let hasNegativeCycle = false;
+    for (const node of allNodes) {
+        if (node.distance === Infinity) continue;
+        
+        const neighbors = getNeighbors(grid, node.row, node.col);
+        for (const neighbor of neighbors) {
+            const newDist = node.distance + neighbor.weight;
+            if (newDist < neighbor.distance) {
+                hasNegativeCycle = true;
                 break;
             }
         }
+        
+        if (hasNegativeCycle) break;
     }
-
+    
+    // In case of negative cycle, we might want to handle it differently
+    // For visualization purposes, we just return what we have so far
+    if (hasNegativeCycle) {
+        console.warn("Negative cycle detected in the graph");
+    }
+    
     return visitedNodesInOrder;
 };
 
@@ -92,4 +116,16 @@ const getNeighbors = (grid: Node[][], row: number, col: number): Node[] => {
     }
 
     return neighbors;
-}; 
+};
+
+export const getNodesInShortestPathOrder = (endNode: Node): Node[] => {
+    const nodesInShortestPathOrder: Node[] = [];
+    let currentNode: Node | null = endNode;
+  
+    while (currentNode !== null) {
+        nodesInShortestPathOrder.unshift(currentNode);
+        currentNode = currentNode.previousNode;
+    }
+  
+    return nodesInShortestPathOrder;
+};

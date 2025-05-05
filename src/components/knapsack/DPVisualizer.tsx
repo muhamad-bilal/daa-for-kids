@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Item, DPStep } from '@/types/knapsack';
+import { Slider } from "@/components/ui/slider"
 
 interface DPVisualizerProps {
     items: Item[];
     maxWeight: number;
+    emptyBagWeight: number;
     onStepChange?: (step: number) => void;
 }
 
-const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepChange }) => {
+const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, emptyBagWeight, onStepChange }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [dpTable, setDpTable] = useState<DPStep[][]>([]);
     const [explanation, setExplanation] = useState<string>('');
@@ -115,13 +117,12 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepCha
                 <div className="text-lg font-semibold">Dynamic Programming Table</div>
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
-                        <span className="text-sm">Speed:</span>
-                        <input
-                            type="range"
-                            min="0"
-                            max="900"
-                            value={1000 - playSpeed}
-                            onChange={handleSpeedChange}
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">Speed:</span>
+                        <Slider
+                            value={[1000 - playSpeed]}
+                            onValueChange={(value) => setPlaySpeed(1000 - value[0])}
+                            max={900}
+                            step={100}
                             className="w-24"
                         />
                     </div>
@@ -129,20 +130,20 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepCha
                         <button
                             onClick={handlePrevStep}
                             disabled={currentStep === 0}
-                            className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+                            className="px-3 py-1 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors disabled:opacity-50"
                         >
                             Previous
                         </button>
                         <button
                             onClick={togglePlay}
-                            className="px-3 py-1 bg-blue-500 text-white rounded"
+                            className="px-3 py-1 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors"
                         >
                             {isPlaying ? 'Pause' : 'Play'}
                         </button>
                         <button
                             onClick={handleNextStep}
                             disabled={currentStep === dpTable.flat().length - 1}
-                            className="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50"
+                            className="px-3 py-1 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors disabled:opacity-50"
                         >
                             Next
                         </button>
@@ -150,24 +151,24 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepCha
                 </div>
             </div>
 
-            <div className="bg-white/10 p-4 rounded-lg">
-                <div className="text-sm mb-2">Step {currentStep + 1} of {dpTable.flat().length}</div>
-                <div className="text-sm mb-4">{explanation}</div>
+            <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Step {currentStep + 1} of {dpTable.flat().length}</div>
+                <div className="text-sm text-zinc-700 dark:text-zinc-300 mb-4">{explanation}</div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
                             <tr>
-                                <th className="border p-2">Item</th>
+                                <th className="border border-zinc-200 dark:border-zinc-700 p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">Item</th>
                                 {Array.from({ length: maxWeight + 1 }, (_, i) => (
-                                    <th key={i} className="border p-2">{i}</th>
+                                    <th key={i} className="border border-zinc-200 dark:border-zinc-700 p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">{i}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {dpTable.map((row, i) => (
                                 <tr key={i}>
-                                    <td className="border p-2">
+                                    <td className="border border-zinc-200 dark:border-zinc-700 p-2 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300">
                                         {i === 0 ? 'Empty' : items[i - 1].name}
                                     </td>
                                     {row.map((cell, j) => {
@@ -175,8 +176,10 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepCha
                                         return (
                                             <td
                                                 key={j}
-                                                className={`border p-2 ${isCurrentStep ? 'bg-blue-500/20' : ''} ${cell.selected ? 'bg-green-500/20' : ''
-                                                    }`}
+                                                className={`border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300
+                                                    ${isCurrentStep ? 'bg-violet-500/20 dark:bg-violet-500/30' : ''} 
+                                                    ${cell.selected ? 'bg-fuchsia-500/20 dark:bg-fuchsia-500/30' : ''}
+                                                    ${i === 0 ? 'bg-zinc-50 dark:bg-zinc-900' : 'bg-white dark:bg-zinc-800'}`}
                                             >
                                                 {cell.value}
                                             </td>
@@ -187,6 +190,23 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, onStepCha
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+                <Slider
+                    value={[currentStep]}
+                    onValueChange={(value) => {
+                        setCurrentStep(value[0]);
+                        onStepChange?.(value[0]);
+                    }}
+                    max={dpTable.flat().length - 1}
+                    step={1}
+                    className="flex-1"
+                />
+                <span className="text-sm text-zinc-600 dark:text-zinc-400 min-w-[60px] text-right">
+                    Step {currentStep + 1} of {dpTable.flat().length}
+                </span>
             </div>
         </div>
     );

@@ -8,6 +8,35 @@ import { useVisualizerStore } from "../../store/useVisualizerStore"
 import type { Algorithm } from "../../types"
 import Header from "@/components/header"
 import { Slider } from "@/components/ui/slider"
+import { Menu, MenuItem } from "../../components/menu"
+import { useState } from "react"
+import { type MotionProps, type Variants } from "framer-motion"
+
+const menu = {
+    closed: {
+        scale: 0,
+        transition: {
+            delay: 0.15,
+        },
+    },
+    open: {
+        scale: 1,
+        transition: {
+            type: "spring",
+            duration: 0.4,
+            delayChildren: 0.2,
+            staggerChildren: 0.05,
+        },
+    },
+} satisfies Variants;
+
+const item = {
+    variants: {
+        closed: { x: -16, opacity: 0 },
+        open: { x: 0, opacity: 1 },
+    },
+    transition: { opacity: { duration: 0.2 } },
+} satisfies MotionProps;
 
 export default function PathfindingPage() {
     const {
@@ -22,6 +51,8 @@ export default function PathfindingPage() {
         resetGrid,
         generateRandomMap,
     } = useVisualizerStore()
+
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
 
     const handleStart = () => {
         setIsRunning(true)
@@ -83,21 +114,25 @@ export default function PathfindingPage() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Pick Algorithm</label>
-                                    <select
-                                        className="w-full p-2 rounded-lg bg-zinc-100 dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600"
-                                        value={currentAlgorithm}
-                                        onChange={(e) => setCurrentAlgorithm(e.target.value as Algorithm)}
+                                    <Menu
+                                        label={currentAlgorithm}
+                                        open={isMenuOpen}
+                                        setOpen={setIsMenuOpen}
+                                        animate={isMenuOpen ? "open" : "closed"}
+                                        initial="closed"
+                                        exit="closed"
+                                        variants={menu}
                                     >
-                                        <option value="BFS">BFS</option>
-                                        <option value="DFS">DFS</option>
-                                        <option value="Dijkstra">Dijkstra</option>
-                                        <option value="A*">A*</option>
-                                        <option value="Greedy">Greedy</option>
-                                        <option value="BellmanFord">Bellman-Ford</option>
-                                        <option value="FloydWarshall">Floyd-Warshall</option>
-                                        <option value="Bidirectional">Bidirectional</option>
-                                        <option value="JumpPoint">Jump Point</option>
-                                    </select>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("BFS"); setIsMenuOpen(false); }}>BFS</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("DFS"); setIsMenuOpen(false); }}>DFS</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("Dijkstra"); setIsMenuOpen(false); }}>Dijkstra</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("A*"); setIsMenuOpen(false); }}>A*</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("Greedy"); setIsMenuOpen(false); }}>Greedy</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("BellmanFord"); setIsMenuOpen(false); }}>Bellman-Ford</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("FloydWarshall"); setIsMenuOpen(false); }}>Floyd-Warshall</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("Bidirectional"); setIsMenuOpen(false); }}>Bidirectional</MenuItem>
+                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("JumpPoint"); setIsMenuOpen(false); }}>Jump Point</MenuItem>
+                                    </Menu>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Set Speed</label>
