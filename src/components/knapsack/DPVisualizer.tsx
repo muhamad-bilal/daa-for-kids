@@ -178,12 +178,7 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, emptyBagW
                                             <td
                                                 key={j}
                                                 className={`border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300
-<<<<<<< HEAD
-                                                    ${isCurrentStep ? 'bg-violet-500/70 dark:bg-violet-500/70' : ''} 
-                                                    ${isUpdated ? 'ring-2 ring-yellow-500 dark:ring-yellow-400' : ''}
-=======
                                                     ${isCurrentStep ? 'bg-violet-500/20 dark:bg-violet-500/30' : ''} 
->>>>>>> parent of 79f7b56 (fixed knapsack dp table step slider)
                                                     ${cell.selected ? 'bg-fuchsia-500/20 dark:bg-fuchsia-500/30' : ''}
                                                     ${i === 0 ? 'bg-zinc-50 dark:bg-zinc-900' : 'bg-white dark:bg-zinc-800'}`}
                                             >
