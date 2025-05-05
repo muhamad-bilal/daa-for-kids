@@ -52,7 +52,7 @@ const applications = [
             "function add(a, b) {\n  // Add two numbers\n  return a + b;\n}\n\nlet result = add(5, 3);\nconsole.log(result);",
         tools: "Git diff, GitHub comparison tools, Beyond Compare, Visual Studio Code diff view",
         reference: "Myers, E. W. (1986). An O(ND) difference algorithm and its variations.",
-        link: "http://www.xmailserver.org/diff2.pdf",
+        link: "https://dl.acm.org/doi/10.1145/359424.359432",
         customDemo: "diff",
         icon: <GitCompare size={20} />,
     },
