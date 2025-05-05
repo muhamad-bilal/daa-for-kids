@@ -2,16 +2,25 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { ChevronRight, LayoutGrid, Network, Package2, GitMerge, FileCode, Github, Moon, Sun } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronRight, LayoutGrid, Network, Package2, GitMerge, FileCode, GithubIcon, Moon, Sun, Linkedin } from "lucide-react"
 
 export default function Home() {
     const [theme, setTheme] = useState<"light" | "dark">("light")
+    const [selectedContributor, setSelectedContributor] = useState<number | null>(null)
 
     const toggleTheme = () => {
         setTheme(theme === "light" ? "dark" : "light")
         document.documentElement.classList.toggle("dark")
     }
+
+    const contributors = [
+        { name: "Muhammad Bilal", github: "muhamad-bilal", linkedin: "muhammad-billo", color: "fuchsia" },
+        { name: "Abdullah Mustafa", github: "rimocide", linkedin: "abdullah-mustafa", color: "violet" },
+        { name: "Umer Sami", github: "MoUmerSami2004", linkedin: "umer-sami", color: "pink" },
+        { name: "Hamza Motiwala", github: "moti987", linkedin: "hamza-motiwala", color: "purple" },
+        { name: "Zarish Asim", github: "Zarish166", linkedin: "zarish-asim", color: "fuchsia" },
+    ]
 
     return (
         <div className={`min-h-screen ${theme === "dark" ? "dark" : ""}`}>
@@ -74,7 +83,7 @@ export default function Home() {
                                     rel="noopener noreferrer"
                                     className="px-6 py-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
                                 >
-                                    <Github size={18} />
+                                    <GithubIcon size={20} />
                                     View Source
                                 </a>
                             </div>
@@ -279,13 +288,7 @@ export default function Home() {
                             </h2>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                                {[
-                                    { name: "Muhammad Bilal", github: "muhamad-bilal", color: "fuchsia" },
-                                    { name: "Abdullah Mustafa", github: "rimocide", color: "violet" },
-                                    { name: "Umer Sami", github: "MoUmerSami2004", color: "pink" },
-                                    { name: "Hamza Motiwala", github: "moti987", color: "purple" },
-                                    { name: "Zarish Asim", github: "Zarish166", color: "fuchsia" },
-                                ].map((contributor, index) => (
+                                {contributors.map((contributor, index) => (
                                     <motion.div
                                         key={index}
                                         initial={{ opacity: 0, y: 20 }}
@@ -293,28 +296,79 @@ export default function Home() {
                                         transition={{ duration: 0.3, delay: index * 0.1 }}
                                         viewport={{ once: true }}
                                     >
-                                        <a
-                                            href={`https://github.com/${contributor.github}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block p-6 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-fuchsia-200 dark:hover:border-fuchsia-800 hover:shadow-md transition-all"
-                                        >
-                                            <div className="flex flex-col items-center text-center">
-                                                <div
-                                                    className={`w-16 h-16 rounded-full bg-${contributor.color}-100 dark:bg-${contributor.color}-900/30 flex items-center justify-center text-${contributor.color}-500 mb-4`}
-                                                >
-                                                    <span className="text-xl font-bold">{contributor.name.charAt(0)}</span>
+                                        {selectedContributor !== index && (
+                                            <motion.div
+                                                layoutId={`contributor-${index}`}
+                                                className="block p-6 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-fuchsia-200 dark:hover:border-fuchsia-800 hover:shadow-md transition-all cursor-pointer"
+                                                onClick={() => setSelectedContributor(index)}
+                                            >
+                                                <div className="flex flex-col items-center text-center">
+                                                    <div
+                                                        className={`w-16 h-16 rounded-full bg-${contributor.color}-100 dark:bg-${contributor.color}-900/30 flex items-center justify-center text-${contributor.color}-500 mb-4`}
+                                                    >
+                                                        <span className="text-xl font-bold">{contributor.name.charAt(0)}</span>
+                                                    </div>
+                                                    <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{contributor.name}</h3>
+                                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">@{contributor.github}</p>
                                                 </div>
-                                                <h3 className="font-medium text-zinc-900 dark:text-zinc-100">{contributor.name}</h3>
-                                                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">@{contributor.github}</p>
-                                            </div>
-                                        </a>
+                                            </motion.div>
+                                        )}
                                     </motion.div>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </section>
+
+                <AnimatePresence>
+                    {selectedContributor !== null && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+                            onClick={() => setSelectedContributor(null)}
+                        >
+                            <motion.div
+                                layoutId={`contributor-${selectedContributor}`}
+                                className="bg-white dark:bg-zinc-800 rounded-2xl p-8 max-w-md w-full shadow-xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex flex-col items-center text-center">
+                                    <div
+                                        className={`w-24 h-24 rounded-full bg-${contributors[selectedContributor].color}-100 dark:bg-${contributors[selectedContributor].color}-900/30 flex items-center justify-center text-${contributors[selectedContributor].color}-500 mb-6`}
+                                    >
+                                        <span className="text-3xl font-bold">{contributors[selectedContributor].name.charAt(0)}</span>
+                                    </div>
+                                    <h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                                        {contributors[selectedContributor].name}
+                                    </h3>
+                                    <p className="text-zinc-500 dark:text-zinc-400 mb-6">@{contributors[selectedContributor].github}</p>
+                                    <div className="flex gap-4">
+                                        <a
+                                            href={`https://github.com/${contributors[selectedContributor].github}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+                                        >
+                                            <GithubIcon size={20} />
+                                            GitHub
+                                        </a>
+                                        <a
+                                            href={`https://linkedin.com/in/${contributors[selectedContributor].linkedin}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+                                        >
+                                            <Linkedin size={20} />
+                                            LinkedIn
+                                        </a>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Footer */}
                 <footer className="py-8 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
@@ -344,7 +398,7 @@ export default function Home() {
                                     rel="noopener noreferrer"
                                     className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm flex items-center gap-1"
                                 >
-                                    <Github size={14} />
+                                    <GithubIcon size={14} />
                                     GitHub
                                 </a>
                             </div>
