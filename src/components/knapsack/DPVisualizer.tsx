@@ -177,7 +177,7 @@ const DPVisualizer: React.FC<DPVisualizerProps> = ({ items, maxWeight, emptyBagW
                                             <td
                                                 key={j}
                                                 className={`border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300
-                                                    ${isCurrentStep ? 'bg-violet-500/50 dark:bg-violet-500/50' : ''} 
+                                                    ${isCurrentStep ? 'bg-violet-500/70 dark:bg-violet-500/70' : ''} 
                                                     ${cell.selected ? 'bg-fuchsia-500/20 dark:bg-fuchsia-500/30' : ''}
                                                     ${i === 0 ? 'bg-zinc-50 dark:bg-zinc-900' : 'bg-white dark:bg-zinc-800'}`}
                                             >
