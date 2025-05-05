@@ -3,10 +3,8 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import Link from "next/link"
 import { motion } from "framer-motion"
 import {
-    ChevronLeft,
     Play,
     Pause,
     SkipBack,
