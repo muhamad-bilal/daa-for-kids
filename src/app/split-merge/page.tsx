@@ -484,9 +484,9 @@ export default function LCSVisualizer() {
         <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 transition-colors duration-300">
             <Header />
             <div className="container mx-auto px-4 max-w-7xl py-8">
-                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-violet-500">
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-violet-500 text-center mb-16 leading-tight ">
                     LCS Visualizer
-                </h1>
+                </h1>
                 <div className="w-24"></div> {/* Spacer for alignment */}
 
                 <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 border border-zinc-200 dark:border-zinc-700">
