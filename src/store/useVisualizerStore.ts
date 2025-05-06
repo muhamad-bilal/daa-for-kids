@@ -324,7 +324,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       }
 
       // Run the algorithm
-      const visitedNodesInOrder = await algorithm(resetGrid, resetGrid[startNode.row][startNode.col], resetGrid[endNode.row][endNode.col])
+      const visitedNodesInOrder = await (algorithm as unknown as (grid: Grid, startNode: Node, endNode: Node) => Promise<Node[]>)(resetGrid, resetGrid[startNode.row][startNode.col], resetGrid[endNode.row][endNode.col])
       
       if (!visitedNodesInOrder || visitedNodesInOrder.length === 0) {
         set({ error: "No path found or algorithm did not return nodes" })
