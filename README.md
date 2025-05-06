@@ -76,7 +76,7 @@ To set up the project on your local machine, follow these steps:
 1.  Clone the repository:
 
     ```bash
-    git clone [https://github.com/yourusername/daa-for-kids.git](https://github.com/yourusername/daa-for-kids.git)
+    git clone https://github.com/muhamad-bilal/daa-for-kids.git
     cd daa-for-kids
     ```
 
