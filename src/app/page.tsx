@@ -386,12 +386,14 @@ export default function Home() {
                                 >
                                     About
                                 </Link>
-                                <a
-                                    href="https://rimocide.github.io/daa-for-kids-docs/"
-                                    className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm"
-                                >
-                                    Documentation
-                                </a>
+                          <a
+    href="https://rimocide.github.io/daa-for-kids-docs/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm"
+>
+    Documentation
+</a>
                                 <a
                                     href="https://github.com/muhamad-bilal/daa-for-kids"
                                     target="_blank"
