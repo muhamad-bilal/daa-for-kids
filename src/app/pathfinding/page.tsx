@@ -9,7 +9,7 @@ import type { Algorithm } from "../../types"
 import Header from "@/components/header"
 import { Slider } from "@/components/ui/slider"
 import { Menu, MenuItem } from "../../components/menu"
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { type MotionProps, type Variants } from "framer-motion"
 
 const menu = {
@@ -38,6 +38,18 @@ const item = {
     transition: { opacity: { duration: 0.2 } },
 } satisfies MotionProps;
 
+const algorithms: Algorithm[] = [
+    "BFS",
+    "DFS",
+    "Dijkstra",
+    "A*",
+    "Greedy",
+    "BellmanFord",
+    "FloydWarshall",
+    "Bidirectional",
+    "JumpPoint",
+];
+
 export default function PathfindingPage() {
     const {
         currentAlgorithm,
@@ -50,24 +62,40 @@ export default function PathfindingPage() {
         setSpeed,
         resetGrid,
         generateRandomMap,
+        startNode,
+        endNode,
+        setError,
+        visualizeAlgorithm,
     } = useVisualizerStore()
 
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-    const handleStart = () => {
-        setIsRunning(true)
-        setIsPaused(false)
-    }
+    const handleStart = useCallback(async () => {
+        if (!startNode || !endNode) {
+            setError("Please set both start and end nodes before running the algorithm");
+            return;
+        }
+        setIsRunning(true);
+        setIsPaused(false);
+        await visualizeAlgorithm();
+    }, [startNode, endNode, setIsRunning, setIsPaused, setError, visualizeAlgorithm]);
 
-    const handlePause = () => {
-        setIsPaused(!isPaused)
-    }
+    const handlePause = useCallback(() => {
+        setIsPaused(!isPaused);
+    }, [isPaused, setIsPaused]);
 
-    const handleReset = () => {
-        resetGrid()
-        setIsRunning(false)
-        setIsPaused(false)
-    }
+    const handleReset = useCallback(() => {
+        resetGrid();
+        setIsRunning(false);
+        setIsPaused(false);
+        setError(null);
+    }, [resetGrid, setIsRunning, setIsPaused, setError]);
+
+    const handleAlgorithmChange = useCallback((algorithm: Algorithm) => {
+        setCurrentAlgorithm(algorithm);
+        setIsMenuOpen(false);
+        setError(null);
+    }, [setCurrentAlgorithm, setError]);
 
     return (
         <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-50 transition-colors duration-300">
@@ -123,15 +151,16 @@ export default function PathfindingPage() {
                                         exit="closed"
                                         variants={menu}
                                     >
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("BFS"); setIsMenuOpen(false); }}>BFS</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("DFS"); setIsMenuOpen(false); }}>DFS</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("Dijkstra"); setIsMenuOpen(false); }}>Dijkstra</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("A*"); setIsMenuOpen(false); }}>A*</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("Greedy"); setIsMenuOpen(false); }}>Greedy</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("BellmanFord"); setIsMenuOpen(false); }}>Bellman-Ford</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("FloydWarshall"); setIsMenuOpen(false); }}>Floyd-Warshall</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("Bidirectional"); setIsMenuOpen(false); }}>Bidirectional</MenuItem>
-                                        <MenuItem variants={item.variants} transition={item.transition} onClick={() => { setCurrentAlgorithm("JumpPoint"); setIsMenuOpen(false); }}>Jump Point</MenuItem>
+                                        {algorithms.map((algorithm) => (
+                                            <MenuItem
+                                                key={algorithm}
+                                                variants={item.variants}
+                                                transition={item.transition}
+                                                onClick={() => handleAlgorithmChange(algorithm)}
+                                            >
+                                                {algorithm}
+                                            </MenuItem>
+                                        ))}
                                     </Menu>
                                 </div>
                                 <div>

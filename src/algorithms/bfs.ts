@@ -9,17 +9,8 @@ export const bfs = (grid: Grid, startNode: Node, endNode: Node) => {
   const start = grid[startNode.row][startNode.col];
   const end = grid[endNode.row][endNode.col];
 
-  // Reset node states
-  grid.forEach(row => {
-    row.forEach(node => {
-      node.isVisited = false;
-      node.isPath = false;
-      node.previousNode = null;
-    });
-  });
-
   // Initialize start node
-  start.isVisited = true;
+  start.distance = 0;
   queue.push(start);
   visited.add(`${start.row}-${start.col}`);
   visitedNodesInOrder.push(start);
@@ -27,7 +18,7 @@ export const bfs = (grid: Grid, startNode: Node, endNode: Node) => {
   while (queue.length > 0) {
     const currentNode = queue.shift()!;
 
-    if (currentNode === end) {
+    if (currentNode.row === end.row && currentNode.col === end.col) {
       return visitedNodesInOrder;
     }
 
@@ -36,7 +27,6 @@ export const bfs = (grid: Grid, startNode: Node, endNode: Node) => {
       const key = `${neighbor.row}-${neighbor.col}`;
       if (!visited.has(key) && neighbor.type !== 'wall') {
         neighbor.previousNode = currentNode;
-        neighbor.isVisited = true;
         visited.add(key);
         queue.push(neighbor);
         visitedNodesInOrder.push(neighbor);

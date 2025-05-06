@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import type { Node, Grid, Algorithm, VisualizerState, AlgorithmInfo } from "../types"
+import * as algorithms from "../algorithms"
 
 const GRID_ROWS = 20
 const GRID_COLS = 40
@@ -241,13 +242,13 @@ const generateRandomMap = (): Grid => {
   return newGrid
 }
 
-export const useVisualizerStore = create<VisualizerState>((set) => ({
+export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   grid: createInitialGrid(),
   startNode: null,
   endNode: null,
   isRunning: false,
   isPaused: false,
-  speed: 50,
+  speed: 5, // Changed from 50 to make visualization more visible
   currentAlgorithm: "BFS",
   algorithmInfo,
   error: null,
@@ -268,6 +269,7 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
       endNode: null,
       isRunning: false,
       isPaused: false,
+      error: null,
     })
   },
   generateRandomMap: () => {
@@ -280,6 +282,143 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
       endNode,
       isRunning: false,
       isPaused: false,
+      error: null, 
     })
+  },
+
+  // Fixed visualization logic
+  visualizeAlgorithm: async () => {
+    const { currentAlgorithm, startNode, endNode, speed } = get()
+    
+    if (!startNode || !endNode) {
+      set({ error: "Please set both start and end nodes before running the algorithm" })
+      return
+    }
+
+    try {
+      // Reset grid visualization but keep walls and weights
+      const resetGrid = get().grid.map(row =>
+        row.map(node => ({
+          ...node,
+          isVisited: false,
+          isPath: false,
+          distance: node.type === "start" ? 0 : Number.POSITIVE_INFINITY,
+          fScore: Number.POSITIVE_INFINITY,
+          f: Number.POSITIVE_INFINITY,
+          previousNode: null,
+        }))
+      )
+      
+      set({ grid: resetGrid, error: null })
+      
+      // Get the algorithm function - normalize the name for import
+      const algorithmKey = currentAlgorithm
+        .replace(/\*/g, "Star")
+        .replace(/\s+/g, "")
+        .toLowerCase() as keyof typeof algorithms
+      
+      const algorithm = algorithms[algorithmKey]
+      if (!algorithm) {
+        set({ error: `Algorithm '${currentAlgorithm}' not implemented` })
+        return
+      }
+
+      // Run the algorithm
+      const visitedNodesInOrder = await algorithm(resetGrid, resetGrid[startNode.row][startNode.col], resetGrid[endNode.row][endNode.col])
+      
+      if (!visitedNodesInOrder || visitedNodesInOrder.length === 0) {
+        set({ error: "No path found or algorithm did not return nodes" })
+        return
+      }
+      
+      // Visualize visited nodes
+      for (let i = 0; i < visitedNodesInOrder.length; i++) {
+        // Check if animation should pause
+        if (get().isPaused) {
+          await new Promise<void>((resolve) => {
+            const checkPaused = () => {
+              if (!get().isPaused) {
+                resolve()
+              } else {
+                setTimeout(checkPaused, 100)
+              }
+            }
+            checkPaused()
+          })
+        }
+        
+        // Skip if visualization was cancelled
+        if (!get().isRunning) return
+        
+        const node = visitedNodesInOrder[i]
+        
+        // Get a fresh copy of the grid
+        const currentGrid = get().grid;
+        const newGrid = [...currentGrid.map(row => [...row])];
+        
+        // Update the node in the new grid to mark it as visited
+        newGrid[node.row][node.col] = {
+          ...newGrid[node.row][node.col],
+          isVisited: true,
+          // Copy the previousNode reference from the node returned by the algorithm
+          previousNode: node.previousNode ? 
+            currentGrid[node.previousNode.row][node.previousNode.col] : 
+            null
+        }
+        
+        set({ grid: newGrid })
+        
+        // Wait based on speed setting
+        await new Promise(resolve => setTimeout(resolve, 1000 / get().speed))
+      }
+
+      // Get the shortest path using the updated grid from the store
+      const currentGrid = get().grid;
+      const endNodeFromGrid = currentGrid[endNode.row][endNode.col];
+      const nodesInShortestPathOrder = algorithms.getNodesInShortestPathOrder(endNodeFromGrid);
+
+      // Visualize shortest path
+      if (nodesInShortestPathOrder.length > 0) {
+        for (let i = 0; i < nodesInShortestPathOrder.length; i++) {
+          // Check if animation should pause
+          if (get().isPaused) {
+            await new Promise<void>((resolve) => {
+              const checkPaused = () => {
+                if (!get().isPaused) {
+                  resolve()
+                } else {
+                  setTimeout(checkPaused, 100)
+                }
+              }
+              checkPaused()
+            })
+          }
+          
+          // Skip if visualization was cancelled
+          if (!get().isRunning) return
+          
+          const node = nodesInShortestPathOrder[i]
+          
+          // Use the latest grid
+          const newGrid = [...get().grid.map(row => [...row])]
+          newGrid[node.row][node.col] = {
+            ...newGrid[node.row][node.col],
+            isPath: true
+          }
+          
+          set({ grid: newGrid })
+          
+          // Wait based on speed setting
+          await new Promise(resolve => setTimeout(resolve, 1000 / get().speed))
+        }
+      } else {
+        set({ error: "No path found to target" })
+      }
+    } catch (error) {
+      console.error("Algorithm error:", error)
+      set({ error: `Error running algorithm: ${error instanceof Error ? error.message : String(error)}` })
+    } finally {
+      set({ isRunning: false })
+    }
   },
 }))

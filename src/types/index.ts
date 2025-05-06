@@ -58,4 +58,5 @@ export interface VisualizerState {
   setError: (error: string | null) => void;
   resetGrid: () => void;
   generateRandomMap: () => void;
+  visualizeAlgorithm: () => Promise<void>;
 } 

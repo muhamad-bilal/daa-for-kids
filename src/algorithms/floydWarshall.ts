@@ -1,49 +1,40 @@
-import { Node } from '../types';
+import { Node, Grid } from '../types';
 
-export const floydWarshall = (grid: Node[][], startNode: Node, endNode: Node): Node[] => {
+export const floydWarshall = (grid: Grid, startNode: Node, endNode: Node) => {
     const visitedNodesInOrder: Node[] = [];
-    const rows = grid.length;
-    const cols = grid[0].length;
-    const size = rows * cols;
+    const nodes = getAllNodes(grid);
+    const n = nodes.length;
     
     // Initialize distance and next matrices
-    const dist: number[][] = Array(size).fill(null).map(() => Array(size).fill(Infinity));
-    const next: (number | null)[][] = Array(size).fill(null).map(() => Array(size).fill(null));
+    const dist: number[][] = Array(n).fill(0).map(() => Array(n).fill(Number.POSITIVE_INFINITY));
+    const next: (number | null)[][] = Array(n).fill(0).map(() => Array(n).fill(null));
 
-    // Convert 2D grid coordinates to 1D indices
-    const toIndex = (row: number, col: number) => row * cols + col;
-    const toCoords = (index: number) => ({ row: Math.floor(index / cols), col: index % cols });
+    // Get the actual nodes from the grid
+    const start = grid[startNode.row][startNode.col];
+    const end = grid[endNode.row][endNode.col];
 
     // Initialize distances and next pointers
-    for (let i = 0; i < size; i++) {
-        const { row: iRow, col: iCol } = toCoords(i);
-        if (grid[iRow][iCol].type === 'wall') continue;
-
+    for (let i = 0; i < n; i++) {
+        const node = nodes[i];
         dist[i][i] = 0;
-        next[i][i] = i;
-
-        const neighbors = getNeighbors(grid, iRow, iCol);
+        
+        const neighbors = getNeighbors(node, grid);
         for (const neighbor of neighbors) {
-            const j = toIndex(neighbor.row, neighbor.col);
-            dist[i][j] = neighbor.weight;
-            next[i][j] = j;
+            const j = nodes.indexOf(neighbor);
+            if (j !== -1) {
+                dist[i][j] = neighbor.weight;
+                next[i][j] = j;
+            }
         }
     }
 
     // Floyd-Warshall algorithm
-    for (let k = 0; k < size; k++) {
-        const { row: kRow, col: kCol } = toCoords(k);
-        if (grid[kRow][kCol].type === 'wall') continue;
-
-        for (let i = 0; i < size; i++) {
-            const { row: iRow, col: iCol } = toCoords(i);
-            if (grid[iRow][iCol].type === 'wall') continue;
-
-            for (let j = 0; j < size; j++) {
-                const { row: jRow, col: jCol } = toCoords(j);
-                if (grid[jRow][jCol].type === 'wall') continue;
-
-                if (dist[i][k] + dist[k][j] < dist[i][j]) {
+    for (let k = 0; k < n; k++) {
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                if (dist[i][k] !== Number.POSITIVE_INFINITY && 
+                    dist[k][j] !== Number.POSITIVE_INFINITY && 
+                    dist[i][k] + dist[k][j] < dist[i][j]) {
                     dist[i][j] = dist[i][k] + dist[k][j];
                     next[i][j] = next[i][k];
                 }
@@ -52,53 +43,46 @@ export const floydWarshall = (grid: Node[][], startNode: Node, endNode: Node): N
     }
 
     // Reconstruct path
-    const startIndex = toIndex(startNode.row, startNode.col);
-    const endIndex = toIndex(endNode.row, endNode.col);
+    const startIndex = nodes.indexOf(start);
+    const endIndex = nodes.indexOf(end);
     
-    if (next[startIndex][endIndex] === null) {
+    if (startIndex === -1 || endIndex === -1 || 
+        dist[startIndex][endIndex] === Number.POSITIVE_INFINITY) {
         return visitedNodesInOrder;
     }
 
     let current = startIndex;
     while (current !== endIndex) {
-        const { row, col } = toCoords(current);
-        visitedNodesInOrder.push(grid[row][col]);
-        
-        const nextIndex = next[current][endIndex];
-        if (nextIndex === null) break;
-        
-        const { row: nextRow, col: nextCol } = toCoords(nextIndex);
-        grid[nextRow][nextCol].previousNode = grid[row][col];
-        current = nextIndex;
+        visitedNodesInOrder.push(nodes[current]);
+        const nextNode = next[current][endIndex];
+        if (nextNode === null) break;
+        current = nextNode;
     }
+    visitedNodesInOrder.push(nodes[endIndex]);
 
-    visitedNodesInOrder.push(endNode);
     return visitedNodesInOrder;
 };
 
-const getNeighbors = (grid: Node[][], row: number, col: number): Node[] => {
-    const neighbors: Node[] = [];
-    const directions = [
-        [-1, 0], // up
-        [0, 1],  // right
-        [1, 0],  // down
-        [0, -1], // left
-    ];
-
-    for (const [dr, dc] of directions) {
-        const newRow = row + dr;
-        const newCol = col + dc;
-
-        if (
-            newRow >= 0 &&
-            newRow < grid.length &&
-            newCol >= 0 &&
-            newCol < grid[0].length &&
-            grid[newRow][newCol].type !== 'wall'
-        ) {
-            neighbors.push(grid[newRow][newCol]);
+const getAllNodes = (grid: Grid): Node[] => {
+    const nodes: Node[] = [];
+    for (const row of grid) {
+        for (const node of row) {
+            if (node.type !== 'wall') {
+                nodes.push(node);
+            }
         }
     }
+    return nodes;
+};
 
-    return neighbors;
+const getNeighbors = (node: Node, grid: Grid): Node[] => {
+    const neighbors: Node[] = [];
+    const { row, col } = node;
+
+    if (row > 0) neighbors.push(grid[row - 1][col]);
+    if (row < grid.length - 1) neighbors.push(grid[row + 1][col]);
+    if (col > 0) neighbors.push(grid[row][col - 1]);
+    if (col < grid[0].length - 1) neighbors.push(grid[row][col + 1]);
+
+    return neighbors.filter(neighbor => neighbor.type !== 'wall');
 }; 

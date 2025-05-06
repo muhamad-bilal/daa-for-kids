@@ -1,57 +1,84 @@
-import { Node } from '../types';
+import { Node, Grid } from '../types';
 
-export const bidirectional = (grid: Node[][], startNode: Node, endNode: Node): Node[] => {
+export const bidirectional = (grid: Grid, startNode: Node, endNode: Node) => {
     const visitedNodesInOrder: Node[] = [];
-    const startQueue: Node[] = [startNode];
-    const endQueue: Node[] = [endNode];
-    const startVisited = new Set<string>();
-    const endVisited = new Set<string>();
-    const startParent = new Map<string, Node>();
-    const endParent = new Map<string, Node>();
+    const forwardQueue: Node[] = [];
+    const backwardQueue: Node[] = [];
+    const forwardVisited = new Set<string>();
+    const backwardVisited = new Set<string>();
+    const forwardParent = new Map<string, Node>();
+    const backwardParent = new Map<string, Node>();
 
-    startVisited.add(`${startNode.row}-${startNode.col}`);
-    endVisited.add(`${endNode.row}-${endNode.col}`);
+    // Get the actual nodes from the grid
+    const start = grid[startNode.row][startNode.col];
+    const end = grid[endNode.row][endNode.col];
 
-    while (startQueue.length > 0 && endQueue.length > 0) {
-        // Search from start
-        const startCurrent = startQueue.shift()!;
-        visitedNodesInOrder.push(startCurrent);
+    // Initialize start and end nodes
+    start.distance = 0;
+    end.distance = 0;
+    forwardQueue.push(start);
+    backwardQueue.push(end);
+    forwardVisited.add(`${start.row}-${start.col}`);
+    backwardVisited.add(`${end.row}-${end.col}`);
+    visitedNodesInOrder.push(start);
+    visitedNodesInOrder.push(end);
 
-        if (endVisited.has(`${startCurrent.row}-${startCurrent.col}`)) {
+    while (forwardQueue.length > 0 && backwardQueue.length > 0) {
+        // Forward BFS
+        const forwardNode = forwardQueue.shift()!;
+        const forwardKey = `${forwardNode.row}-${forwardNode.col}`;
+
+        if (backwardVisited.has(forwardKey)) {
             // Path found
-            const intersection = startCurrent;
-            const path = reconstructPath(intersection, startParent, endParent);
-            return [...visitedNodesInOrder, ...path];
+            const intersection = forwardNode;
+            const path = reconstructPath(
+                intersection,
+                forwardParent,
+                backwardParent,
+                start,
+                end
+            );
+            visitedNodesInOrder.push(...path);
+            return visitedNodesInOrder;
         }
 
-        const startNeighbors = getNeighbors(grid, startCurrent);
-        for (const neighbor of startNeighbors) {
+        const forwardNeighbors = getNeighbors(forwardNode, grid);
+        for (const neighbor of forwardNeighbors) {
             const key = `${neighbor.row}-${neighbor.col}`;
-            if (!startVisited.has(key)) {
-                startVisited.add(key);
-                startParent.set(key, startCurrent);
-                startQueue.push(neighbor);
+            if (!forwardVisited.has(key) && neighbor.type !== 'wall') {
+                forwardVisited.add(key);
+                forwardParent.set(key, forwardNode);
+                forwardQueue.push(neighbor);
+                visitedNodesInOrder.push(neighbor);
             }
         }
 
-        // Search from end
-        const endCurrent = endQueue.shift()!;
-        visitedNodesInOrder.push(endCurrent);
+        // Backward BFS
+        const backwardNode = backwardQueue.shift()!;
+        const backwardKey = `${backwardNode.row}-${backwardNode.col}`;
 
-        if (startVisited.has(`${endCurrent.row}-${endCurrent.col}`)) {
+        if (forwardVisited.has(backwardKey)) {
             // Path found
-            const intersection = endCurrent;
-            const path = reconstructPath(intersection, startParent, endParent);
-            return [...visitedNodesInOrder, ...path];
+            const intersection = backwardNode;
+            const path = reconstructPath(
+                intersection,
+                forwardParent,
+                backwardParent,
+                start,
+                end
+            );
+            visitedNodesInOrder.push(...path);
+            return visitedNodesInOrder;
         }
 
-        const endNeighbors = getNeighbors(grid, endCurrent);
-        for (const neighbor of endNeighbors) {
+        const backwardNeighbors = getNeighbors(backwardNode, grid);
+        for (const neighbor of backwardNeighbors) {
             const key = `${neighbor.row}-${neighbor.col}`;
-            if (!endVisited.has(key)) {
-                endVisited.add(key);
-                endParent.set(key, endCurrent);
-                endQueue.push(neighbor);
+            if (!backwardVisited.has(key) && neighbor.type !== 'wall') {
+                backwardVisited.add(key);
+                backwardParent.set(key, backwardNode);
+                backwardQueue.push(neighbor);
+                visitedNodesInOrder.push(neighbor);
             }
         }
     }
@@ -61,59 +88,44 @@ export const bidirectional = (grid: Node[][], startNode: Node, endNode: Node): N
 
 const reconstructPath = (
     intersection: Node,
-    startParent: Map<string, Node>,
-    endParent: Map<string, Node>
+    forwardParent: Map<string, Node>,
+    backwardParent: Map<string, Node>,
+    start: Node,
+    end: Node
 ): Node[] => {
     const path: Node[] = [];
-    let current: Node | undefined = intersection;
+    let current: Node | null = intersection;
 
-    // Reconstruct path from intersection to start
-    while (current) {
-        path.unshift(current);
+    // Reconstruct forward path
+    while (current !== start) {
         const key = `${current.row}-${current.col}`;
-        current = startParent.get(key);
+        const parent = forwardParent.get(key);
+        if (!parent) break;
+        current.previousNode = parent;
+        current = parent;
     }
 
-    // Reconstruct path from intersection to end
-    current = endParent.get(`${intersection.row}-${intersection.col}`);
-    while (current) {
-        path.push(current);
+    // Reconstruct backward path
+    current = intersection;
+    while (current !== end) {
         const key = `${current.row}-${current.col}`;
-        current = endParent.get(key);
-    }
-
-    // Set previous nodes for visualization
-    for (let i = 1; i < path.length; i++) {
-        path[i].previousNode = path[i - 1];
+        const parent = backwardParent.get(key);
+        if (!parent) break;
+        parent.previousNode = current;
+        current = parent;
     }
 
     return path;
 };
 
-const getNeighbors = (grid: Node[][], node: Node): Node[] => {
+const getNeighbors = (node: Node, grid: Grid): Node[] => {
     const neighbors: Node[] = [];
     const { row, col } = node;
-    const directions = [
-        [-1, 0], // up
-        [0, 1],  // right
-        [1, 0],  // down
-        [0, -1], // left
-    ];
 
-    for (const [dr, dc] of directions) {
-        const newRow = row + dr;
-        const newCol = col + dc;
-
-        if (
-            newRow >= 0 &&
-            newRow < grid.length &&
-            newCol >= 0 &&
-            newCol < grid[0].length &&
-            grid[newRow][newCol].type !== 'wall'
-        ) {
-            neighbors.push(grid[newRow][newCol]);
-        }
-    }
+    if (row > 0) neighbors.push(grid[row - 1][col]);
+    if (row < grid.length - 1) neighbors.push(grid[row + 1][col]);
+    if (col > 0) neighbors.push(grid[row][col - 1]);
+    if (col < grid[0].length - 1) neighbors.push(grid[row][col + 1]);
 
     return neighbors;
 }; 

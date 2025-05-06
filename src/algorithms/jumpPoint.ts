@@ -1,154 +1,151 @@
-import { Node } from '../types';
+import { Node, Grid } from '../types';
 
-export const jumpPoint = (grid: Node[][], startNode: Node, endNode: Node): Node[] => {
+export const jumpPoint = (grid: Grid, startNode: Node, endNode: Node) => {
     const visitedNodesInOrder: Node[] = [];
     const openSet = new Set<Node>();
-    const closedSet = new Set<string>();
-    const gScore = new Map<string, number>();
-    const fScore = new Map<string, number>();
-    const cameFrom = new Map<string, Node>();
+    const closedSet = new Set<Node>();
 
-    // Initialize scores
-    const startKey = `${startNode.row}-${startNode.col}`;
-    gScore.set(startKey, 0);
-    fScore.set(startKey, getHeuristic(startNode, endNode));
-    openSet.add(startNode);
+    // Get the actual nodes from the grid
+    const start = grid[startNode.row][startNode.col];
+    const end = grid[endNode.row][endNode.col];
+
+    // Initialize start node
+    start.distance = 0;
+    start.fScore = heuristic(start, end);
+    openSet.add(start);
 
     while (openSet.size > 0) {
         // Get node with lowest fScore
-        let current = Array.from(openSet).reduce((min, node) => {
-            const key = `${node.row}-${node.col}`;
-            const minKey = `${min.row}-${min.col}`;
-            return (fScore.get(key) || Infinity) < (fScore.get(minKey) || Infinity) ? node : min;
-        });
-
-        if (current === endNode) {
-            return reconstructPath(cameFrom, current, visitedNodesInOrder);
+        let current = getLowestFScore(openSet);
+        if (current === end) {
+            return visitedNodesInOrder;
         }
 
         openSet.delete(current);
-        closedSet.add(`${current.row}-${current.col}`);
+        closedSet.add(current);
         visitedNodesInOrder.push(current);
 
-        const jumpPoints = findJumpPoints(current, grid, endNode);
-        for (const jumpPoint of jumpPoints) {
-            const jumpKey = `${jumpPoint.row}-${jumpPoint.col}`;
-            if (closedSet.has(jumpKey)) continue;
+        // Get jump points in all directions
+        const neighbors = getNeighbors(current, grid);
+        for (const neighbor of neighbors) {
+            if (closedSet.has(neighbor)) continue;
 
-            const tentativeGScore = (gScore.get(`${current.row}-${current.col}`) || 0) +
-                getDistance(current, jumpPoint);
-
-            if (!openSet.has(jumpPoint)) {
-                openSet.add(jumpPoint);
-            } else if (tentativeGScore >= (gScore.get(jumpKey) || Infinity)) {
-                continue;
+            const jumpPoint = jump(neighbor, current, end, grid);
+            if (jumpPoint) {
+                const tentativeGScore = current.distance + heuristic(current, jumpPoint);
+                if (!openSet.has(jumpPoint) || tentativeGScore < jumpPoint.distance) {
+                    jumpPoint.previousNode = current;
+                    jumpPoint.distance = tentativeGScore;
+                    jumpPoint.fScore = tentativeGScore + heuristic(jumpPoint, end);
+                    if (!openSet.has(jumpPoint)) {
+                        openSet.add(jumpPoint);
+                    }
+                }
             }
-
-            cameFrom.set(jumpKey, current);
-            gScore.set(jumpKey, tentativeGScore);
-            fScore.set(jumpKey, tentativeGScore + getHeuristic(jumpPoint, endNode));
         }
     }
 
     return visitedNodesInOrder;
 };
 
-const findJumpPoints = (node: Node, grid: Node[][], endNode: Node): Node[] => {
-    const jumpPoints: Node[] = [];
-    const directions = [
-        [-1, 0], // up
-        [0, 1],  // right
-        [1, 0],  // down
-        [0, -1], // left
-    ];
+const jump = (node: Node, parent: Node, end: Node, grid: Grid): Node | null => {
+    const dx = node.row - parent.row;
+    const dy = node.col - parent.col;
 
-    for (const [dr, dc] of directions) {
-        let current = node;
-        let nextRow = current.row + dr;
-        let nextCol = current.col + dc;
-
-        while (
-            nextRow >= 0 &&
-            nextRow < grid.length &&
-            nextCol >= 0 &&
-            nextCol < grid[0].length &&
-            grid[nextRow][nextCol].type !== 'wall'
-        ) {
-            const nextNode = grid[nextRow][nextCol];
-            
-            // Check if this is a jump point
-            if (isJumpPoint(nextNode, grid, dr, dc)) {
-                jumpPoints.push(nextNode);
-                break;
-            }
-
-            // Check if we've reached the end node
-            if (nextNode === endNode) {
-                jumpPoints.push(nextNode);
-                break;
-            }
-
-            current = nextNode;
-            nextRow += dr;
-            nextCol += dc;
-        }
-    }
-
-    return jumpPoints;
-};
-
-const isJumpPoint = (node: Node, grid: Node[][], dr: number, dc: number): boolean => {
-    const { row, col } = node;
+    if (!isWalkable(node, grid)) return null;
+    if (node === end) return node;
 
     // Check for forced neighbors
-    if (dr !== 0) {
-        // Moving vertically
+    if (dx !== 0 && dy !== 0) {
+        // Diagonal movement
         if (
-            (col > 0 && grid[row][col - 1].type === 'wall' && grid[row + dr][col - 1].type !== 'wall') ||
-            (col < grid[0].length - 1 && grid[row][col + 1].type === 'wall' && grid[row + dr][col + 1].type !== 'wall')
+            (isWalkable(grid[node.row][node.col + dy], grid) && !isWalkable(grid[node.row + dx][node.col + dy], grid)) ||
+            (isWalkable(grid[node.row + dx][node.col], grid) && !isWalkable(grid[node.row + dx][node.col + dy], grid))
         ) {
-            return true;
+            return node;
         }
     } else {
-        // Moving horizontally
-        if (
-            (row > 0 && grid[row - 1][col].type === 'wall' && grid[row - 1][col + dc].type !== 'wall') ||
-            (row < grid.length - 1 && grid[row + 1][col].type === 'wall' && grid[row + 1][col + dc].type !== 'wall')
-        ) {
-            return true;
+        // Straight movement
+        if (dx !== 0) {
+            // Horizontal movement
+            if (
+                (isWalkable(grid[node.row][node.col + 1], grid) && !isWalkable(grid[node.row + dx][node.col + 1], grid)) ||
+                (isWalkable(grid[node.row][node.col - 1], grid) && !isWalkable(grid[node.row + dx][node.col - 1], grid))
+            ) {
+                return node;
+            }
+        } else {
+            // Vertical movement
+            if (
+                (isWalkable(grid[node.row + 1][node.col], grid) && !isWalkable(grid[node.row + 1][node.col + dy], grid)) ||
+                (isWalkable(grid[node.row - 1][node.col], grid) && !isWalkable(grid[node.row - 1][node.col + dy], grid))
+            ) {
+                return node;
+            }
         }
     }
 
-    return false;
-};
-
-const getHeuristic = (node: Node, endNode: Node): number => {
-    // Manhattan distance
-    return Math.abs(node.row - endNode.row) + Math.abs(node.col - endNode.col);
-};
-
-const getDistance = (node1: Node, node2: Node): number => {
-    return Math.abs(node1.row - node2.row) + Math.abs(node1.col - node2.col);
-};
-
-const reconstructPath = (
-    cameFrom: Map<string, Node>,
-    current: Node,
-    visitedNodesInOrder: Node[]
-): Node[] => {
-    const path: Node[] = [current];
-    let currentKey = `${current.row}-${current.col}`;
-
-    while (cameFrom.has(currentKey)) {
-        current = cameFrom.get(currentKey)!;
-        path.unshift(current);
-        currentKey = `${current.row}-${current.col}`;
+    // Recursively check next node
+    if (dx !== 0 && dy !== 0) {
+        // Diagonal movement
+        if (jump(grid[node.row + dx][node.col], node, end, grid)) return node;
+        if (jump(grid[node.row][node.col + dy], node, end, grid)) return node;
     }
 
-    // Set previous nodes for visualization
-    for (let i = 1; i < path.length; i++) {
-        path[i].previousNode = path[i - 1];
+    return jump(grid[node.row + dx][node.col + dy], node, end, grid);
+};
+
+const isWalkable = (node: Node, grid: Grid): boolean => {
+    return (
+        node.row >= 0 &&
+        node.row < grid.length &&
+        node.col >= 0 &&
+        node.col < grid[0].length &&
+        node.type !== 'wall'
+    );
+};
+
+const getNeighbors = (node: Node, grid: Grid): Node[] => {
+    const neighbors: Node[] = [];
+    const { row, col } = node;
+
+    // Add all 8 directions
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const newRow = row + dr;
+            const newCol = col + dc;
+            if (
+                newRow >= 0 &&
+                newRow < grid.length &&
+                newCol >= 0 &&
+                newCol < grid[0].length &&
+                grid[newRow][newCol].type !== 'wall'
+            ) {
+                neighbors.push(grid[newRow][newCol]);
+            }
+        }
     }
 
-    return [...visitedNodesInOrder, ...path];
+    return neighbors;
+};
+
+const getLowestFScore = (openSet: Set<Node>): Node => {
+    let lowest: Node | null = null;
+    let lowestFScore = Infinity;
+
+    for (const node of Array.from(openSet)) {
+        if (node.fScore < lowestFScore) {
+            lowestFScore = node.fScore;
+            lowest = node;
+        }
+    }
+
+    return lowest!;
+};
+
+const heuristic = (nodeA: Node, nodeB: Node): number => {
+    const dx = Math.abs(nodeA.row - nodeB.row);
+    const dy = Math.abs(nodeA.col - nodeB.col);
+    return Math.sqrt(dx * dx + dy * dy);
 }; 

@@ -2,36 +2,28 @@ import { Node, Grid } from '../types';
 
 export const astar = (grid: Grid, startNode: Node, endNode: Node) => {
   const visitedNodesInOrder: Node[] = [];
-  const openSet: Node[] = [startNode];
+  const openSet: Node[] = [];
   const closedSet = new Set<string>();
-  
-  // Reset node states
-  grid.forEach(row => {
-    row.forEach(node => {
-      node.distance = Infinity;
-      node.fScore = Infinity;
-      node.isVisited = false;
-      node.isPath = false;
-      node.previousNode = null;
-    });
-  });
-  
+
+  // Get the actual nodes from the grid
+  const start = grid[startNode.row][startNode.col];
+  const end = grid[endNode.row][endNode.col];
+
   // Initialize start node
-  startNode.distance = 0;
-  startNode.fScore = getManhattanDistance(startNode, endNode);
-  startNode.isVisited = true;
-  visitedNodesInOrder.push(startNode);
+  start.distance = 0;
+  start.fScore = heuristic(start, end);
+  openSet.push(start);
 
   while (openSet.length > 0) {
-    // Sort nodes by fScore
-    openSet.sort((a, b) => a.fScore - b.fScore);
+    sortNodesByFScore(openSet);
     const currentNode = openSet.shift()!;
 
-    // Skip if we hit a wall
-    if (currentNode.type === 'wall') continue;
+    if (currentNode.row === end.row && currentNode.col === end.col) {
+      return visitedNodesInOrder;
+    }
 
-    // If we reached the end, return visited nodes
-    if (currentNode === endNode) return visitedNodesInOrder;
+    closedSet.add(`${currentNode.row}-${currentNode.col}`);
+    visitedNodesInOrder.push(currentNode);
 
     const neighbors = getNeighbors(currentNode, grid);
     for (const neighbor of neighbors) {
@@ -39,28 +31,31 @@ export const astar = (grid: Grid, startNode: Node, endNode: Node) => {
         continue;
       }
 
-      const tentativeGScore = currentNode.distance + neighbor.weight;
-      if (tentativeGScore < neighbor.distance) {
-        neighbor.previousNode = currentNode;
-        neighbor.distance = tentativeGScore;
-        neighbor.fScore = tentativeGScore + getManhattanDistance(neighbor, endNode);
-        neighbor.isVisited = true;
+      const tentativeDistance = currentNode.distance + neighbor.weight;
 
-        if (!openSet.includes(neighbor)) {
-          openSet.push(neighbor);
-          visitedNodesInOrder.push(neighbor);
-        }
+      if (!openSet.includes(neighbor)) {
+        openSet.push(neighbor);
+      } else if (tentativeDistance >= neighbor.distance) {
+        continue;
       }
-    }
 
-    closedSet.add(`${currentNode.row}-${currentNode.col}`);
+      neighbor.previousNode = currentNode;
+      neighbor.distance = tentativeDistance;
+      neighbor.fScore = neighbor.distance + heuristic(neighbor, end);
+    }
   }
 
   return visitedNodesInOrder;
 };
 
-const getManhattanDistance = (nodeA: Node, nodeB: Node): number => {
-  return Math.abs(nodeA.row - nodeB.row) + Math.abs(nodeA.col - nodeB.col);
+const heuristic = (node: Node, endNode: Node): number => {
+  const dx = Math.abs(node.row - endNode.row);
+  const dy = Math.abs(node.col - endNode.col);
+  return dx + dy;
+};
+
+const sortNodesByFScore = (nodes: Node[]) => {
+  nodes.sort((a, b) => a.fScore - b.fScore);
 };
 
 const getNeighbors = (node: Node, grid: Grid): Node[] => {

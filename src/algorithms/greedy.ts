@@ -1,38 +1,40 @@
-import { Node } from '../types';
+import { Node, Grid } from '../types';
 
-const getHeuristic = (node: Node, endNode: Node): number => {
-    // Manhattan distance
-    return Math.abs(node.row - endNode.row) + Math.abs(node.col - endNode.col);
-};
-
-export const greedy = (grid: Node[][], startNode: Node, endNode: Node): Node[] => {
+export const greedy = (grid: Grid, startNode: Node, endNode: Node) => {
     const visitedNodesInOrder: Node[] = [];
-    const openSet = new Set<Node>();
+    const openSet: Node[] = [];
     const closedSet = new Set<string>();
-    
-    startNode.f = getHeuristic(startNode, endNode);
-    openSet.add(startNode);
 
-    while (openSet.size > 0) {
-        // Find node with lowest f score
-        let currentNode = Array.from(openSet).reduce((min, node) => 
-            node.f < min.f ? node : min
-        );
+    // Get the actual nodes from the grid
+    const start = grid[startNode.row][startNode.col];
+    const end = grid[endNode.row][endNode.col];
 
-        if (currentNode === endNode) {
+    // Initialize start node
+    start.distance = 0;
+    start.fScore = heuristic(start, end);
+    openSet.push(start);
+
+    while (openSet.length > 0) {
+        sortNodesByFScore(openSet);
+        const currentNode = openSet.shift()!;
+
+        if (currentNode.row === end.row && currentNode.col === end.col) {
             return visitedNodesInOrder;
         }
 
-        openSet.delete(currentNode);
         closedSet.add(`${currentNode.row}-${currentNode.col}`);
         visitedNodesInOrder.push(currentNode);
 
-        const neighbors = getUnvisitedNeighbors(currentNode, grid, closedSet);
+        const neighbors = getNeighbors(currentNode, grid);
         for (const neighbor of neighbors) {
-            if (!openSet.has(neighbor)) {
+            if (neighbor.type === 'wall' || closedSet.has(`${neighbor.row}-${neighbor.col}`)) {
+                continue;
+            }
+
+            if (!openSet.includes(neighbor)) {
                 neighbor.previousNode = currentNode;
-                neighbor.f = getHeuristic(neighbor, endNode);
-                openSet.add(neighbor);
+                neighbor.fScore = heuristic(neighbor, end);
+                openSet.push(neighbor);
             }
         }
     }
@@ -40,31 +42,24 @@ export const greedy = (grid: Node[][], startNode: Node, endNode: Node): Node[] =
     return visitedNodesInOrder;
 };
 
-const getUnvisitedNeighbors = (node: Node, grid: Node[][], closedSet: Set<string>): Node[] => {
+const heuristic = (node: Node, endNode: Node): number => {
+    const dx = Math.abs(node.row - endNode.row);
+    const dy = Math.abs(node.col - endNode.col);
+    return dx + dy;
+};
+
+const sortNodesByFScore = (nodes: Node[]) => {
+    nodes.sort((a, b) => a.fScore - b.fScore);
+};
+
+const getNeighbors = (node: Node, grid: Grid): Node[] => {
     const neighbors: Node[] = [];
     const { row, col } = node;
-    const directions = [
-        [-1, 0], // up
-        [0, 1],  // right
-        [1, 0],  // down
-        [0, -1], // left
-    ];
 
-    for (const [dr, dc] of directions) {
-        const newRow = row + dr;
-        const newCol = col + dc;
-
-        if (
-            newRow >= 0 &&
-            newRow < grid.length &&
-            newCol >= 0 &&
-            newCol < grid[0].length &&
-            !closedSet.has(`${newRow}-${newCol}`) &&
-            grid[newRow][newCol].type !== 'wall'
-        ) {
-            neighbors.push(grid[newRow][newCol]);
-        }
-    }
+    if (row > 0) neighbors.push(grid[row - 1][col]);
+    if (row < grid.length - 1) neighbors.push(grid[row + 1][col]);
+    if (col > 0) neighbors.push(grid[row][col - 1]);
+    if (col < grid[0].length - 1) neighbors.push(grid[row][col + 1]);
 
     return neighbors;
 }; 

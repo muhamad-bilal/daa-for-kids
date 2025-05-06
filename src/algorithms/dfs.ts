@@ -1,57 +1,50 @@
-import { Node } from '../types';
+import { Node, Grid } from '../types';
 
-export const dfs = (grid: Node[][], startNode: Node, endNode: Node): Node[] => {
+export const dfs = (grid: Grid, startNode: Node, endNode: Node) => {
     const visitedNodesInOrder: Node[] = [];
     const stack: Node[] = [];
     const visited = new Set<string>();
 
-    stack.push(startNode);
-    visited.add(`${startNode.row}-${startNode.col}`);
+    // Get the actual nodes from the grid
+    const start = grid[startNode.row][startNode.col];
+    const end = grid[endNode.row][endNode.col];
+
+    // Initialize start node
+    start.distance = 0;
+    stack.push(start);
+    visited.add(`${start.row}-${start.col}`);
+    visitedNodesInOrder.push(start);
 
     while (stack.length > 0) {
         const currentNode = stack.pop()!;
-        visitedNodesInOrder.push(currentNode);
 
-        if (currentNode === endNode) {
+        if (currentNode.row === end.row && currentNode.col === end.col) {
             return visitedNodesInOrder;
         }
 
-        const neighbors = getUnvisitedNeighbors(currentNode, grid, visited);
+        const neighbors = getNeighbors(currentNode, grid);
         for (const neighbor of neighbors) {
-            visited.add(`${neighbor.row}-${neighbor.col}`);
-            neighbor.previousNode = currentNode;
-            stack.push(neighbor);
+            const key = `${neighbor.row}-${neighbor.col}`;
+            if (!visited.has(key) && neighbor.type !== 'wall') {
+                neighbor.previousNode = currentNode;
+                visited.add(key);
+                stack.push(neighbor);
+                visitedNodesInOrder.push(neighbor);
+            }
         }
     }
 
     return visitedNodesInOrder;
 };
 
-const getUnvisitedNeighbors = (node: Node, grid: Node[][], visited: Set<string>): Node[] => {
+const getNeighbors = (node: Node, grid: Grid): Node[] => {
     const neighbors: Node[] = [];
     const { row, col } = node;
-    const directions = [
-        [-1, 0], // up
-        [0, 1],  // right
-        [1, 0],  // down
-        [0, -1], // left
-    ];
 
-    for (const [dr, dc] of directions) {
-        const newRow = row + dr;
-        const newCol = col + dc;
-
-        if (
-            newRow >= 0 &&
-            newRow < grid.length &&
-            newCol >= 0 &&
-            newCol < grid[0].length &&
-            !visited.has(`${newRow}-${newCol}`) &&
-            grid[newRow][newCol].type !== 'wall'
-        ) {
-            neighbors.push(grid[newRow][newCol]);
-        }
-    }
+    if (row > 0) neighbors.push(grid[row - 1][col]);
+    if (row < grid.length - 1) neighbors.push(grid[row + 1][col]);
+    if (col > 0) neighbors.push(grid[row][col - 1]);
+    if (col < grid[0].length - 1) neighbors.push(grid[row][col + 1]);
 
     return neighbors;
 }; 

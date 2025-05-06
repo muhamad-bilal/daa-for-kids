@@ -1,5 +1,40 @@
 import { Node, Grid } from '../types';
 
+export const dijkstra = (grid: Grid, startNode: Node, endNode: Node) => {
+  const visitedNodesInOrder: Node[] = [];
+  const unvisitedNodes = getAllNodes(grid);
+
+  // Get the actual nodes from the grid
+  const start = grid[startNode.row][startNode.col];
+  const end = grid[endNode.row][endNode.col];
+
+  // Initialize start node
+  start.distance = 0;
+
+  while (unvisitedNodes.length > 0) {
+    sortNodesByDistance(unvisitedNodes);
+    const closestNode = unvisitedNodes.shift()!;
+
+    // If we encounter a wall, we skip it
+    if (closestNode.type === 'wall') continue;
+
+    // If the closest node is at a distance of infinity,
+    // we must be trapped and should therefore stop
+    if (closestNode.distance === Number.POSITIVE_INFINITY) return visitedNodesInOrder;
+
+    closestNode.isVisited = true;
+    visitedNodesInOrder.push(closestNode);
+
+    if (closestNode.row === end.row && closestNode.col === end.col) {
+      return visitedNodesInOrder;
+    }
+
+    updateUnvisitedNeighbors(closestNode, grid);
+  }
+
+  return visitedNodesInOrder;
+};
+
 const getAllNodes = (grid: Grid): Node[] => {
   const nodes: Node[] = [];
   for (const row of grid) {
@@ -10,48 +45,15 @@ const getAllNodes = (grid: Grid): Node[] => {
   return nodes;
 };
 
-export const dijkstra = (grid: Grid, startNode: Node, endNode: Node) => {
-  const visitedNodesInOrder: Node[] = [];
-  const unvisitedNodes = getAllNodes(grid);
-  
-  // Initialize distances
-  unvisitedNodes.forEach(node => {
-    node.distance = node === startNode ? 0 : Infinity;
-    node.isVisited = false;
-    node.previousNode = null;
-  });
-
-  while (unvisitedNodes.length > 0) {
-    // Sort nodes by distance
-    unvisitedNodes.sort((a, b) => a.distance - b.distance);
-    const closestNode = unvisitedNodes.shift()!;
-
-    // Skip if we hit a wall
-    if (closestNode.type === 'wall') continue;
-
-    // If we're stuck, return visited nodes
-    if (closestNode.distance === Infinity) return visitedNodesInOrder;
-
-    closestNode.isVisited = true;
-    visitedNodesInOrder.push(closestNode);
-
-    // If we reached the end, return visited nodes
-    if (closestNode === endNode) return visitedNodesInOrder;
-
-    updateUnvisitedNeighbors(closestNode, grid);
-  }
-
-  return visitedNodesInOrder;
+const sortNodesByDistance = (unvisitedNodes: Node[]) => {
+  unvisitedNodes.sort((nodeA, nodeB) => nodeA.distance - nodeB.distance);
 };
 
 const updateUnvisitedNeighbors = (node: Node, grid: Grid) => {
   const unvisitedNeighbors = getUnvisitedNeighbors(node, grid);
   for (const neighbor of unvisitedNeighbors) {
-    const newDistance = node.distance + neighbor.weight;
-    if (newDistance < neighbor.distance) {
-      neighbor.distance = newDistance;
-      neighbor.previousNode = node;
-    }
+    neighbor.distance = node.distance + neighbor.weight;
+    neighbor.previousNode = node;
   }
 };
 
