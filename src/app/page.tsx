@@ -387,7 +387,7 @@ export default function Home() {
                                     About
                                 </Link>
                                 <a
-                                    href="#"
+                                    href="https://rimocide.github.io/daa-for-kids-docs/"
                                     className="text-zinc-600 dark:text-zinc-400 hover:text-fuchsia-500 dark:hover:text-fuchsia-400 text-sm"
                                 >
                                     Documentation
